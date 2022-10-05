@@ -1,4 +1,4 @@
-# continous-testing.nvim
+# continuous-testing.nvim
 
 ## Description
 
@@ -16,8 +16,7 @@ Run tests async on save, add to diagnostics, get notified on failures.
 
 ```lua
 return require('packer').startup(function(use)
-    -- currently not supported, use local path to cloned plugin
-    use 'aaronhallaert/continous-testing.nvim'
+    use 'aaronhallaert/continuous-testing.nvim'
 end)
 ```
 
