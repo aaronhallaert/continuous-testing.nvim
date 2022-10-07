@@ -1,9 +1,11 @@
+local commands = require("continuous-testing.commands")
+
 local M = {}
 
 M.setup = function(config)
-    require("continuous-testing.ruby_rspec").setup({
-        test_command = config.test_command.ruby_rspec,
-    })
+    require("continuous-testing.config").set_user_specific_config(config or {})
+
+    commands.setup()
 end
 
 return M
