@@ -1,13 +1,14 @@
 local M = {}
 
-local TEST_STATES = {SUCCESS = "passed", FAILED = "failed", SKIPPED = "pending"}
+local TEST_STATES =
+    { SUCCESS = "passed", FAILED = "failed", SKIPPED = "pending" }
 
 local state = {}
 local autocmd = nil
 
 local ns = vim.api.nvim_create_namespace("ContinuousRubyTesting")
-local group = vim.api.nvim_create_augroup("ContinuousRubyTesting",
-                  {clear = true})
+local group =
+    vim.api.nvim_create_augroup("ContinuousRubyTesting", { clear = true })
 
 local clear_test_results = function()
     vim.diagnostic.reset(ns, state.bufnr)
@@ -21,7 +22,7 @@ end
 
 local notify_failure = function(test)
     local description = {
-        "Test failed: " .. test.file_path .. ":" .. test.line_number - 1
+        "Test failed: " .. test.file_path .. ":" .. test.line_number - 1,
         -- "",
         -- "Exception: " .. test.exception.class,
         -- "",
@@ -32,7 +33,7 @@ local notify_failure = function(test)
     --     table.insert(description, line)
     -- end
 
-    vim.notify(description, vim.log.levels.ERROR, {title = "RSpec"})
+    vim.notify(description, vim.log.levels.ERROR, { title = "RSpec" })
 end
 
 local on_exit_callback = function()
@@ -48,7 +49,9 @@ local on_exit_callback = function()
             message = "Test Skipped"
         end
 
-        if test.status == TEST_STATES.FAILED then notify_failure(test) end
+        if test.status == TEST_STATES.FAILED then
+            notify_failure(test)
+        end
 
         table.insert(state.diagnostics, {
             bufnr = state.bufnr,
@@ -57,7 +60,7 @@ local on_exit_callback = function()
             severity = severity,
             source = "rspec",
             message = message,
-            user_data = {}
+            user_data = {},
         })
     end
 
@@ -70,17 +73,21 @@ local buf_write_post_callback = function(bufnr, cmd)
         version = nil,
         seed = nil,
         tests = {},
-        diagnostics = {}
+        diagnostics = {},
     }
 
     return function()
         clear_test_results()
 
         local append_data = function(_, data)
-            if not data then return end
+            if not data then
+                return
+            end
 
             for _, line in ipairs(data) do
-                if not string.find(line, "{") then return end
+                if not string.find(line, "{") then
+                    return
+                end
 
                 local decoded = vim.json.decode(line)
 
@@ -91,19 +98,24 @@ local buf_write_post_callback = function(bufnr, cmd)
                     state.tests[test.file_path .. ":" .. test.line_number] =
                         test
 
-                    local text = {nil}
+                    local text = { nil }
                     if test.status == TEST_STATES.SUCCESS then
-                        text = {"✅"}
+                        text = { "✅" }
                     elseif test.status == TEST_STATES.FAILED then
-                        text = {"❌"}
+                        text = { "❌" }
                     elseif test.status == TEST_STATES.SKIPPED then
-                        text = {"⏭️"}
+                        text = { "⏭️" }
                     else
-                        text = {"❓"}
+                        text = { "❓" }
                     end
 
-                    vim.api.nvim_buf_set_extmark(state.bufnr, ns,
-                        test.line_number - 1, 0, {virt_text = {text}})
+                    vim.api.nvim_buf_set_extmark(
+                        state.bufnr,
+                        ns,
+                        test.line_number - 1,
+                        0,
+                        { virt_text = { text } }
+                    )
                 end
             end
         end
@@ -112,16 +124,18 @@ local buf_write_post_callback = function(bufnr, cmd)
             stdout_buffered = true,
             on_stdout = append_data,
             on_stderr = append_data,
-            on_exit = on_exit_callback
+            on_exit = on_exit_callback,
         })
     end
 end
 
 local testing_dialog = function()
-    local test_key = "./" .. vim.fn.expand("%") .. ":" .. vim.fn.line "."
+    local test_key = "./" .. vim.fn.expand("%") .. ":" .. vim.fn.line(".")
 
     local test = state.tests[test_key]
-    if not test or test.status ~= TEST_STATES.FAILED then return end
+    if not test or test.status ~= TEST_STATES.FAILED then
+        return
+    end
 
     local message = {
         "Test: " .. test.description,
@@ -130,7 +144,7 @@ local testing_dialog = function()
         "Seed: " .. state.seed,
         "",
         "Exception: " .. test.exception.class,
-        "Message:"
+        "Message:",
     }
 
     -- Splitting on new lines because the message array cannot contain any when
@@ -166,27 +180,35 @@ local testing_dialog = function()
         height = win_height,
         row = row,
         col = col,
-        border = "rounded"
+        border = "rounded",
     }
 
-    local buffer = vim.api.nvim_create_buf(false, 'nomodified')
+    local buffer = vim.api.nvim_create_buf(false, "nomodified")
     vim.api.nvim_buf_set_lines(buffer, 0, -1, false, message)
     vim.api.nvim_open_win(buffer, true, opts)
 end
 
 local attach_autocmd_to_buffer = function(bufnr, pattern, cmd)
-    vim.api.nvim_buf_create_user_command(bufnr, "ContinuousRubyTestingDialog",
-        testing_dialog, {})
+    vim.api.nvim_buf_create_user_command(
+        bufnr,
+        "ContinuousRubyTestingDialog",
+        testing_dialog,
+        {}
+    )
 
-    vim.api.nvim_buf_create_user_command(bufnr, "ContinuousRubyTestingFailures",
+    vim.api.nvim_buf_create_user_command(
+        bufnr,
+        "ContinuousRubyTestingFailures",
         function()
             vim.diagnostic.setqflist({
                 ns = ns,
                 open = true,
                 title = "Failed tests:",
-                severity = vim.diagnostic.severity.ERROR
+                severity = vim.diagnostic.severity.ERROR,
             })
-        end, {})
+        end,
+        {}
+    )
 
     vim.api.nvim_create_user_command("StopContinuousRubyTesting", function()
         state.active = false
@@ -194,8 +216,10 @@ local attach_autocmd_to_buffer = function(bufnr, pattern, cmd)
         vim.api.nvim_del_autocmd(autocmd)
         vim.api.nvim_del_user_command("StopContinuousRubyTesting")
         vim.api.nvim_buf_del_user_command(bufnr, "ContinuousRubyTestingDialog")
-        vim.api
-            .nvim_buf_del_user_command(bufnr, "ContinuousRubyTestingFailures")
+        vim.api.nvim_buf_del_user_command(
+            bufnr,
+            "ContinuousRubyTestingFailures"
+        )
 
         clear_test_results()
     end, {})
@@ -203,7 +227,7 @@ local attach_autocmd_to_buffer = function(bufnr, pattern, cmd)
     autocmd = vim.api.nvim_create_autocmd("BufWritePost", {
         group = group,
         pattern = pattern,
-        callback = buf_write_post_callback(bufnr, cmd)
+        callback = buf_write_post_callback(bufnr, cmd),
     })
 
     state.active = true
@@ -218,15 +242,21 @@ M.setup = function(config)
 
     vim.api.nvim_create_user_command("ContinuousRubyTesting", function()
         if state.active then
-            vim.notify("ContinuousRubyTesting is already active",
-                vim.log.levels.INFO)
+            vim.notify(
+                "ContinuousRubyTesting is already active",
+                vim.log.levels.INFO
+            )
             return
         end
 
         local bufnr = vim.api.nvim_get_current_buf()
         local filename = vim.fn.expand("%")
 
-        attach_autocmd_to_buffer(bufnr, "*.rb", inject_file_to_test_command(test_command, filename))
+        attach_autocmd_to_buffer(
+            bufnr,
+            "*.rb",
+            inject_file_to_test_command(test_command, filename)
+        )
     end, {})
 end
 
