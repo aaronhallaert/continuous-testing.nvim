@@ -98,15 +98,13 @@ local buf_write_post_callback = function(bufnr, cmd)
                     state.tests[test.file_path .. ":" .. test.line_number] =
                         test
 
-                    local text = { nil }
+                    local text = { "❓" }
                     if test.status == TEST_STATES.SUCCESS then
                         text = { "✅" }
                     elseif test.status == TEST_STATES.FAILED then
                         text = { "❌" }
                     elseif test.status == TEST_STATES.SKIPPED then
                         text = { "⏭️" }
-                    else
-                        text = { "❓" }
                     end
 
                     vim.api.nvim_buf_set_extmark(
