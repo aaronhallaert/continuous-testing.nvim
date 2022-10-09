@@ -45,8 +45,8 @@ require("continuous-testing").setup {
 
 ## TODO
 
-- [ ] Add github actions: linters, tests
-- [ ] Add branch protection to github project
 - [ ] Create default test command for a language
 - [ ] Ability to override test command based on project (folder)
 - [ ] Add different languages (change to general command `ContinuousTesting` instead of `ContinuousRubyTesting`)
+- [x] Add branch protection to github project
+- [x] Add github actions: linters, tests
