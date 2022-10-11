@@ -33,7 +33,6 @@ end
 
 M.resolve_testing_module_by_file_type = function(filetype)
     local config = config_helper.get_config()
-
     local language = FILE_TYPES[filetype]
     if language == nil then
         notify(

@@ -32,10 +32,20 @@ end)
 -- %file will be replace with the test file
 require("continuous-testing").setup {
     notify = true, -- The default is false
-    ruby = {
-        test_tool = "rspec",
-        test_cmd = "bundle exec spring rspec %file --format json --no-fail-fast"
-    }
+    framework_setup = {
+        ruby = {
+            test_tool = "rspec",
+            test_cmd = "bundle exec rspec %file --format json --no-fail-fast",
+        }
+    },
+    project_override = {
+        ["/Users/name/Developer/ruby-project"] = {
+            ruby = {
+                test_tool = "rspec",
+                test_cmd = "docker exec -it name -- bundle exec rspec %file --format json --no-fail-fast",
+            },
+        },
+    },
 }
 ```
 
@@ -58,9 +68,9 @@ Multiple test files can be attached to the continuous testing plugin.
 
 ## TODO
 
-- [ ] Create default test command for a language
-- [ ] Ability to override test command based on project (folder)
-- [ ] Attach tests based on filetype
+- [x] Create default test command for a language
+- [x] Attach tests based on filetype
+- [x] Ability to override test command based on project (folder)
 - [x] Add different languages (change to general command `ContinuousTesting` instead of `ContinuousRubyTesting`)
 - [x] Add branch protection to github project
 - [x] Add github actions: linters, tests
