@@ -3,7 +3,7 @@ local M = {}
 local config = {}
 
 local DEFAULT_CONFIG = {
-    notifies = false,
+    notify = false,
 }
 
 local set_default_values = function()

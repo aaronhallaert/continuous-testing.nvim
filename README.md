@@ -31,7 +31,7 @@ end)
 ```lua
 -- %file will be replace with the test file
 require("continuous-testing").setup {
-    notify = true -- The default is false
+    notify = true, -- The default is false
     ruby = {
         test_tool = "rspec",
         test_cmd = "bundle exec spring rspec %file --format json --no-fail-fast"
