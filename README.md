@@ -4,6 +4,8 @@
 
 Run tests async on save, add to diagnostics, get notified on failures.
 
+Inspired by [teejdv - Integrated Test Results](https://www.youtube.com/watch?v=cf72gMBrsI0).
+
 ### Screenshots
 
 ![Test Failure](./media/test_failure.png)
@@ -37,6 +39,12 @@ require("continuous-testing").setup {
 }
 ```
 
+### Supported Test Frameworks
+
+| Language | Frameworks | Required Options |
+| -------- | ---------- | ---------------- |
+| Ruby     | rspec      | `--format json`  |
+
 ## Usage
 
 Multiple test files can be attached to the continuous testing plugin.
@@ -52,6 +60,7 @@ Multiple test files can be attached to the continuous testing plugin.
 
 - [ ] Create default test command for a language
 - [ ] Ability to override test command based on project (folder)
+- [ ] Attach tests based on filetype
 - [x] Add different languages (change to general command `ContinuousTesting` instead of `ContinuousRubyTesting`)
 - [x] Add branch protection to github project
 - [x] Add github actions: linters, tests
