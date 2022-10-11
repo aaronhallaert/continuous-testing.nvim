@@ -8,9 +8,9 @@ Inspired by [teejdv - Integrated Test Results](https://www.youtube.com/watch?v=c
 
 ### Screenshots
 
-![Test Failure](./media/test_failure.png)
-![Test Failure Dialog](./media/test_failure_dialog.png)
-![Test Success](./media/test_success.png)
+![Test Failure](./media/test_failure_screen.png)
+![Test Failure Dialog](./media/test_failure_dialog_screen.png)
+![Test Success](./media/test_success_screen.png)
 
 ## Installation
 
