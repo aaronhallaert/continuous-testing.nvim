@@ -3,6 +3,7 @@ local dialog = require("continuous-testing.dialog")
 local notify = require("continuous-testing.notify")
 local utils = require("continuous-testing.utils")
 
+local ATTACHED_TESTS = "AttachedContinuousTests"
 local CONTINUOUS_TESTING = "ContinuousTesting"
 local CONTINUOUS_TESTING_DIALOG = "ContinuousTestingDialog"
 local STOP_CONTINUOUS_TESTING = "StopContinuousTesting"
@@ -29,15 +30,19 @@ local stop_continuous_testing_cmd = function(bufnr)
     end
 end
 
-local open_test_output_dialog = function()
-    local message = testing_module.testing_dialog_message()
+-- Open test output dialog
+-- @param bufnr The bufnr of the test file
+local open_test_output_dialog_cmd = function(bufnr)
+    return function()
+        local message = testing_module.testing_dialog_message(bufnr)
 
-    if message == nil then
-        notify("No content to fill the dialog with", vim.log.levels.WARN)
-        return
+        if message == nil then
+            notify("No content to fill the dialog with", vim.log.levels.WARN)
+            return
+        end
+
+        dialog.open(message)
     end
-
-    dialog.open(message)
 end
 
 -- Run the test file (bufnr) whenever a file is saved with a certain pattern
@@ -96,7 +101,7 @@ local start_continuous_testing = function()
     vim.api.nvim_buf_create_user_command(
         bufnr,
         CONTINUOUS_TESTING_DIALOG,
-        open_test_output_dialog,
+        open_test_output_dialog_cmd(bufnr),
         {}
     )
 end
@@ -105,6 +110,12 @@ M.setup = function()
     vim.api.nvim_create_user_command(
         CONTINUOUS_TESTING,
         start_continuous_testing,
+        {}
+    )
+
+    vim.api.nvim_create_user_command(
+        ATTACHED_TESTS,
+        require("continuous-testing.telescope").open_attached_tests,
         {}
     )
 end

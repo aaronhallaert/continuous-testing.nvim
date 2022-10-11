@@ -1,13 +1,12 @@
-local M = {}
-
 -- namespace for diagnostics
 local ns = vim.api.nvim_create_namespace("ContinuousRubyTesting")
+local state = require("continuous-testing.state").get_state
+local update_state = require("continuous-testing.state").update_state
 
--- global state
--- version, seed, tests, diagnostics
-local state = {}
+local M = {}
 
-local TEST_STATES =
+local EMPTY_STATE = { version = nil, seed = nil, tests = {}, diagnostics = {} }
+local TEST_RESULTS =
     { SUCCESS = "passed", FAILED = "failed", SKIPPED = "pending" }
 
 -- clean up specific tests state of buffer
@@ -17,27 +16,24 @@ M.clear_test_results = function(bufnr)
     print(bufnr)
     vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
 
-    state[bufnr].version = nil
-    state[bufnr].seed = nil
-    state[bufnr].tests = {}
-    state[bufnr].diagnostics = {}
+    update_state(bufnr, EMPTY_STATE)
 end
 
-local on_exit_callback = function()
-    for _, test in pairs(state.tests) do
+local on_exit_callback = function(bufnr)
+    for _, test in pairs(state(bufnr).tests) do
         local severity = vim.diagnostic.severity.ERROR
         local message = "Test Failed"
 
-        if test.status == TEST_STATES.SUCCESS then
+        if test.status == TEST_RESULTS.SUCCESS then
             severity = vim.diagnostic.severity.INFO
             message = "Test Succeeded"
-        elseif test.status == TEST_STATES.SKIPPED then
+        elseif test.status == TEST_RESULTS.SKIPPED then
             severity = vim.diagnostic.severity.WARN
             message = "Test Skipped"
         end
 
-        table.insert(state.diagnostics, {
-            bufnr = state.bufnr,
+        table.insert(state(bufnr).diagnostics, {
+            bufnr = bufnr,
             lnum = test.line_number - 1,
             col = 0,
             severity = severity,
@@ -47,14 +43,19 @@ local on_exit_callback = function()
         })
     end
 
-    vim.diagnostic.set(ns, state.bufnr, state.diagnostics, {})
+    vim.diagnostic.set(ns, bufnr, state(bufnr).diagnostics, {})
 end
 
-M.testing_dialog_message = function()
+M.testing_dialog_message = function(bufnr)
     local test_key = "./" .. vim.fn.expand("%") .. ":" .. vim.fn.line(".")
 
-    local test = state.tests[test_key]
-    if not test or test.status ~= TEST_STATES.FAILED then
+    print("BUFNR")
+    print(bufnr)
+
+    print("STATE")
+    print(vim.inspect(state))
+    local test = state(bufnr).tests[test_key]
+    if not test or test.status ~= TEST_RESULTS.FAILED then
         return
     end
 
@@ -62,7 +63,7 @@ M.testing_dialog_message = function()
         "Test: " .. test.description,
         "Location: " .. test.file_path .. ":" .. test.line_number,
         "Runtime: " .. test.run_time,
-        "Seed: " .. state.seed,
+        "Seed: " .. state(bufnr).seed,
         "",
         "Exception: " .. test.exception.class,
         "Message:",
@@ -90,17 +91,13 @@ end
 
 M.test_result_handler = function(bufnr, cmd)
     vim.notify(
-        { "Adding " .. vim.fn.expand("#" .. bufnr .. ":p") },
+        { "Adding " .. vim.fn.expand("#" .. bufnr .. ":f") },
         vim.log.levels.INFO
     )
 
-    state[bufnr] = {
-        bufnr = bufnr,
-        version = nil,
-        seed = nil,
-        tests = {},
-        diagnostics = {},
-    }
+    local init_state = EMPTY_STATE
+    init_state[bufnr] = bufnr
+    update_state(bufnr, init_state)
 
     return function()
         M.clear_test_results(bufnr)
@@ -118,26 +115,26 @@ M.test_result_handler = function(bufnr, cmd)
 
                 local decoded = vim.json.decode(line)
 
-                state[bufnr].version = decoded.version
-                state[bufnr].seed = decoded.seed
+                state(bufnr).version = decoded.version
+                state(bufnr).seed = decoded.seed
 
                 for _, test in pairs(decoded.examples) do
-                    state[bufnr].tests[test.file_path .. ":" .. test.line_number] =
+                    state(bufnr).tests[test.file_path .. ":" .. test.line_number] =
                         test
 
                     local text
-                    if test.status == TEST_STATES.SUCCESS then
+                    if test.status == TEST_RESULTS.SUCCESS then
                         text = { "✅" }
-                    elseif test.status == TEST_STATES.FAILED then
+                    elseif test.status == TEST_RESULTS.FAILED then
                         text = { "❌" }
-                    elseif test.status == TEST_STATES.SKIPPED then
+                    elseif test.status == TEST_RESULTS.SKIPPED then
                         text = { "⏭️" }
                     else
                         text = { "❓" }
                     end
 
                     vim.api.nvim_buf_set_extmark(
-                        state[bufnr].bufnr,
+                        bufnr,
                         ns,
                         test.line_number - 1,
                         0,
@@ -156,7 +153,7 @@ M.test_result_handler = function(bufnr, cmd)
             stdout_buffered = true,
             on_stdout = append_data,
             on_stderr = append_data,
-            on_exit = on_exit_callback,
+            on_exit = on_exit_callback(bufnr),
         })
     end
 end
