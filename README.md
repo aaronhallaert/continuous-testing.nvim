@@ -39,11 +39,14 @@ require("continuous-testing").setup {
 
 ## Usage
 
-| Command                       | Usage                                              | Behaviour                                     |
-| ----------------------------- | ---------------------------------------------------| --------------------------------------------- |
-| ContinuousTesting             | When current buffer is a test file                 | Add current buffer to start tests on save     |
-| ContinuousTestingDialog       | On line of failure                                 | Show output of failed test in floating window |
-| StopContinuousTesting         | Anywhere in vim when continuous testing is enabled | Stops the continuous testing                  |
+Multiple test files can be attached to the continuous testing plugin.
+
+| Command                 | Usage                                              | Behaviour                                     |
+| ----------------------- | -------------------------------------------------- | --------------------------------------------- |
+| ContinuousTesting       | When current buffer is a test file                 | Add current buffer to start tests on save     |
+| ContinuousTestingDialog | On line of failure                                 | Show output of failed test in floating window |
+| StopContinuousTesting   | Anywhere in vim when continuous testing is enabled | Stops the continuous testing                  |
+| AttachedContinuousTests | Anywhere in vim                                    | List the attached tests in a telescope window |
 
 ## TODO
 

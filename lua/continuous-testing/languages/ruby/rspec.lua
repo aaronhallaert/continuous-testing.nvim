@@ -1,54 +1,72 @@
+-- namespace for diagnostics
+local ns = vim.api.nvim_create_namespace("ContinuousRubyTesting")
+local state = require("continuous-testing.state").get_state
+local update_state = require("continuous-testing.state").update_state
+
 local M = {}
 
-local TEST_STATES =
+local EMPTY_STATE = { version = nil, seed = nil, tests = {}, diagnostics = {} }
+local TEST_RESULTS =
     { SUCCESS = "passed", FAILED = "failed", SKIPPED = "pending" }
 
-local state = {}
-
-local ns = vim.api.nvim_create_namespace("ContinuousRubyTesting")
-
-local clear_test_results = function()
-    vim.diagnostic.reset(ns, state.bufnr)
-    vim.api.nvim_buf_clear_namespace(state.bufnr, ns, 0, -1)
-
-    state.version = nil
-    state.seed = nil
-    state.tests = {}
-    state.diagnostics = {}
+local function get_sign(test_result)
+    local sign_name
+    if test_result == TEST_RESULTS.SUCCESS then
+        sign_name = "test_success"
+    elseif test_result == TEST_RESULTS.FAILED then
+        sign_name = "test_failure"
+    elseif test_result == TEST_RESULTS.SKIPPED then
+        sign_name = "test_skipped"
+    else
+        sign_name = "test_other"
+    end
+    return sign_name
 end
 
-local on_exit_callback = function()
-    for _, test in pairs(state.tests) do
-        local severity = vim.diagnostic.severity.ERROR
-        local message = "Test Failed"
+-- clean up specific tests state of buffer
+-- @param bufnr Bufnr of test file
+M.clear_test_results = function(bufnr)
+    vim.diagnostic.reset(ns, bufnr)
+    vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
+    vim.fn.sign_unplace("continuous_tests", { buffer = bufnr })
 
-        if test.status == TEST_STATES.SUCCESS then
-            severity = vim.diagnostic.severity.INFO
-            message = "Test Succeeded"
-        elseif test.status == TEST_STATES.SKIPPED then
-            severity = vim.diagnostic.severity.WARN
-            message = "Test Skipped"
+    update_state(bufnr, M.deepcopy_table(EMPTY_STATE))
+end
+
+local on_exit_callback = function(bufnr)
+    return function()
+        for _, test in pairs(state(bufnr).tests) do
+            local severity = vim.diagnostic.severity.ERROR
+            local message = "Test Failed"
+
+            if test.status == TEST_RESULTS.SUCCESS then
+                severity = vim.diagnostic.severity.INFO
+                message = "Test Succeeded"
+            elseif test.status == TEST_RESULTS.SKIPPED then
+                severity = vim.diagnostic.severity.WARN
+                message = "Test Skipped"
+            end
+
+            table.insert(state(bufnr).diagnostics, {
+                bufnr = bufnr,
+                lnum = test.line_number - 1,
+                col = 0,
+                severity = severity,
+                source = "rspec",
+                message = message,
+                user_data = {},
+            })
         end
 
-        table.insert(state.diagnostics, {
-            bufnr = state.bufnr,
-            lnum = test.line_number - 1,
-            col = 0,
-            severity = severity,
-            source = "rspec",
-            message = message,
-            user_data = {},
-        })
+        vim.diagnostic.set(ns, bufnr, state(bufnr).diagnostics, {})
     end
-
-    vim.diagnostic.set(ns, state.bufnr, state.diagnostics, {})
 end
 
-M.testing_dialog_message = function()
+M.testing_dialog_message = function(bufnr)
     local test_key = "./" .. vim.fn.expand("%") .. ":" .. vim.fn.line(".")
 
-    local test = state.tests[test_key]
-    if not test or test.status ~= TEST_STATES.FAILED then
+    local test = state(bufnr).tests[test_key]
+    if not test or test.status ~= TEST_RESULTS.FAILED then
         return
     end
 
@@ -56,7 +74,7 @@ M.testing_dialog_message = function()
         "Test: " .. test.description,
         "Location: " .. test.file_path .. ":" .. test.line_number,
         "Runtime: " .. test.run_time,
-        "Seed: " .. state.seed,
+        "Seed: " .. state(bufnr).seed,
         "",
         "Exception: " .. test.exception.class,
         "Message:",
@@ -83,19 +101,21 @@ M.testing_dialog_message = function()
 end
 
 M.test_result_handler = function(bufnr, cmd)
-    state = {
-        bufnr = bufnr,
-        version = nil,
-        seed = nil,
-        tests = {},
-        diagnostics = {},
-    }
+    vim.notify(
+        { "Adding " .. vim.fn.expand("#" .. bufnr .. ":t") },
+        vim.log.levels.INFO
+    )
+
+    local init_state = M.deepcopy_table(EMPTY_STATE)
+    init_state["bufnr"] = bufnr
+    update_state(bufnr, init_state)
 
     return function()
-        clear_test_results()
+        M.clear_test_results(bufnr)
 
         local append_data = function(_, data)
             if not data then
+                vim.notify({ "No data for test" }, vim.log.levels.WARN)
                 return
             end
 
@@ -106,37 +126,30 @@ M.test_result_handler = function(bufnr, cmd)
 
                 local decoded = vim.json.decode(line)
 
-                state.version = decoded.version
-                state.seed = decoded.seed
+                state(bufnr).version = decoded.version
+                state(bufnr).seed = decoded.seed
 
                 for _, test in pairs(decoded.examples) do
-                    state.tests[test.file_path .. ":" .. test.line_number] =
+                    state(bufnr).tests[test.file_path .. ":" .. test.line_number] =
                         test
 
-                    local text
-                    if test.status == TEST_STATES.SUCCESS then
-                        text = { "✅" }
-                    elseif test.status == TEST_STATES.FAILED then
-                        text = { "❌" }
-                    elseif test.status == TEST_STATES.SKIPPED then
-                        text = { "⏭️" }
-                    else
-                        text = { "❓" }
-                    end
-
-                    vim.api.nvim_buf_set_extmark(
-                        state.bufnr,
-                        ns,
-                        test.line_number - 1,
-                        0,
-                        { virt_text = { text } }
+                    vim.fn.sign_place(
+                        test.file_path .. ":" .. test.line_number,
+                        "continuous_tests", -- use default sign group so we can share animation instances.
+                        get_sign(test.status),
+                        bufnr,
+                        { lnum = test.line_number, priority = 100 }
                     )
                 end
 
                 local log_level = decoded.summary.failure_count > 0
                         and vim.log.levels.ERROR
                     or vim.log.levels.INFO
-                vim.notify(decoded.summary_line, log_level, { title = "RSpec" })
+                vim.notify(
+                    decoded.summary_line,
+                    log_level,
+                    { title = "RSpec " .. vim.fn.expand("#" .. bufnr .. ":t") }
+                )
             end
         end
 
@@ -144,11 +157,9 @@ M.test_result_handler = function(bufnr, cmd)
             stdout_buffered = true,
             on_stdout = append_data,
             on_stderr = append_data,
-            on_exit = on_exit_callback,
+            on_exit = on_exit_callback(bufnr),
         })
     end
 end
-
-M.clear_test_results = clear_test_results
 
 return M
