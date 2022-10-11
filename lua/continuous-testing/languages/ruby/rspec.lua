@@ -22,6 +22,7 @@ local function get_sign(test_result)
     end
     return sign_name
 end
+
 -- clean up specific tests state of buffer
 -- @param bufnr Bufnr of test file
 M.clear_test_results = function(bufnr)
@@ -101,7 +102,7 @@ end
 
 M.test_result_handler = function(bufnr, cmd)
     vim.notify(
-        { "Adding " .. vim.fn.expand("#" .. bufnr .. ":f") },
+        { "Adding " .. vim.fn.expand("#" .. bufnr .. ":t") },
         vim.log.levels.INFO
     )
 
