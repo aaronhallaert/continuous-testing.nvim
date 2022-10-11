@@ -29,24 +29,26 @@ end)
 ```lua
 -- %file will be replace with the test file
 require("continuous-testing").setup {
-    test_command = {
-        ruby_rspec = "bundle exec spring rspec %file --format json --no-fail-fast"
+    notify = true -- The default is false
+    ruby = {
+        test_tool = "rspec",
+        test_cmd = "bundle exec spring rspec %file --format json --no-fail-fast"
     }
 }
 ```
 
 ## Usage
 
-| Command                       | Usage                              | Behaviour                                     |
-| ----------------------------- | ---------------------------------- | --------------------------------------------- |
-| ContinuousRubyTesting         | When current buffer is a test file | Add current buffer to start tests on save     |
-| ContinuousRubyTestingDialog   | On line of failure                 | Show output of failed test in floating window |
-| ContinuousRubyTestingFailures | \*                                 | Add test failures to quickfix list            |
+| Command                       | Usage                                              | Behaviour                                     |
+| ----------------------------- | ---------------------------------------------------| --------------------------------------------- |
+| ContinuousTesting             | When current buffer is a test file                 | Add current buffer to start tests on save     |
+| ContinuousTestingDialog       | On line of failure                                 | Show output of failed test in floating window |
+| StopContinuousTesting         | Anywhere in vim when continuous testing is enabled | Stops the continuous testing                  |
 
 ## TODO
 
 - [ ] Create default test command for a language
 - [ ] Ability to override test command based on project (folder)
-- [ ] Add different languages (change to general command `ContinuousTesting` instead of `ContinuousRubyTesting`)
+- [x] Add different languages (change to general command `ContinuousTesting` instead of `ContinuousRubyTesting`)
 - [x] Add branch protection to github project
 - [x] Add github actions: linters, tests
