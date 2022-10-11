@@ -1,20 +1,26 @@
 local M = {}
 
+-- namespace for diagnostics
+local ns = vim.api.nvim_create_namespace("ContinuousRubyTesting")
+
+-- global state
+-- version, seed, tests, diagnostics
+local state = {}
+
 local TEST_STATES =
     { SUCCESS = "passed", FAILED = "failed", SKIPPED = "pending" }
 
-local state = {}
+-- clean up specific tests state of buffer
+-- @param bufnr Bufnr of test file
+M.clear_test_results = function(bufnr)
+    vim.diagnostic.reset(ns, bufnr)
+    print(bufnr)
+    vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
 
-local ns = vim.api.nvim_create_namespace("ContinuousRubyTesting")
-
-local clear_test_results = function()
-    vim.diagnostic.reset(ns, state.bufnr)
-    vim.api.nvim_buf_clear_namespace(state.bufnr, ns, 0, -1)
-
-    state.version = nil
-    state.seed = nil
-    state.tests = {}
-    state.diagnostics = {}
+    state[bufnr].version = nil
+    state[bufnr].seed = nil
+    state[bufnr].tests = {}
+    state[bufnr].diagnostics = {}
 end
 
 local on_exit_callback = function()
@@ -83,7 +89,12 @@ M.testing_dialog_message = function()
 end
 
 M.test_result_handler = function(bufnr, cmd)
-    state = {
+    vim.notify(
+        { "Adding " .. vim.fn.expand("#" .. bufnr .. ":p") },
+        vim.log.levels.INFO
+    )
+
+    state[bufnr] = {
         bufnr = bufnr,
         version = nil,
         seed = nil,
@@ -92,10 +103,11 @@ M.test_result_handler = function(bufnr, cmd)
     }
 
     return function()
-        clear_test_results()
+        M.clear_test_results(bufnr)
 
         local append_data = function(_, data)
             if not data then
+                vim.notify({ "No data for test" }, vim.log.levels.WARN)
                 return
             end
 
@@ -106,11 +118,11 @@ M.test_result_handler = function(bufnr, cmd)
 
                 local decoded = vim.json.decode(line)
 
-                state.version = decoded.version
-                state.seed = decoded.seed
+                state[bufnr].version = decoded.version
+                state[bufnr].seed = decoded.seed
 
                 for _, test in pairs(decoded.examples) do
-                    state.tests[test.file_path .. ":" .. test.line_number] =
+                    state[bufnr].tests[test.file_path .. ":" .. test.line_number] =
                         test
 
                     local text
@@ -125,7 +137,7 @@ M.test_result_handler = function(bufnr, cmd)
                     end
 
                     vim.api.nvim_buf_set_extmark(
-                        state.bufnr,
+                        state[bufnr].bufnr,
                         ns,
                         test.line_number - 1,
                         0,
@@ -148,7 +160,5 @@ M.test_result_handler = function(bufnr, cmd)
         })
     end
 end
-
-M.clear_test_results = clear_test_results
 
 return M
