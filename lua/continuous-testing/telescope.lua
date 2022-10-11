@@ -1,6 +1,6 @@
 local M = {}
 M.open_attached_tests = function()
-    local previewers = require("telescope.previewers")
+    -- local previewers = require("telescope.previewers")
     local pickers = require("telescope.pickers")
     local sorters = require("telescope.sorters")
     local finders = require("telescope.finders")

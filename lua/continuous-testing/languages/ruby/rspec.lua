@@ -30,7 +30,7 @@ M.clear_test_results = function(bufnr)
     vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
     vim.fn.sign_unplace("continuous_tests", { buffer = bufnr })
 
-    update_state(bufnr, table.deepcopy(EMPTY_STATE))
+    update_state(bufnr, M.deepcopy_table(EMPTY_STATE))
 end
 
 local on_exit_callback = function(bufnr)
@@ -106,7 +106,7 @@ M.test_result_handler = function(bufnr, cmd)
         vim.log.levels.INFO
     )
 
-    local init_state = table.deepcopy(EMPTY_STATE)
+    local init_state = M.deepcopy_table(EMPTY_STATE)
     init_state["bufnr"] = bufnr
     update_state(bufnr, init_state)
 
