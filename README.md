@@ -32,10 +32,24 @@ end)
 -- %file will be replace with the test file
 require("continuous-testing").setup {
     notify = true, -- The default is false
-    ruby = {
-        test_tool = "rspec",
-        test_cmd = "bundle exec spring rspec %file --format json --no-fail-fast"
-    }
+    framework_setup = {
+        ruby = {
+            test_tool = "rspec",
+            test_cmd = "bundle exec rspec %file --format json --no-fail-fast",
+        },
+        typescript = {
+            test_tool = "vitest",
+            test_cmd = "yarn vitest run --root=src/main %file --reporter=verbose --reporter=json",
+        },
+    },
+    project_override = {
+        ["/Users/name/Developer/ruby-project"] = {
+            ruby = {
+                test_tool = "rspec",
+                test_cmd = "docker exec -it name -- bundle exec rspec %file",
+            },
+        },
+    },
 }
 ```
 
