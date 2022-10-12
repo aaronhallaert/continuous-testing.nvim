@@ -2,6 +2,7 @@ local config_helper = require("continuous-testing.config")
 local dialog = require("continuous-testing.dialog")
 local notify = require("continuous-testing.notify")
 local utils = require("continuous-testing.utils")
+local state = require("continuous-testing.state")
 
 local ATTACHED_TESTS = "AttachedContinuousTests"
 local CONTINUOUS_TESTING = "ContinuousTesting"
@@ -12,7 +13,6 @@ local M = {}
 
 local group = vim.api.nvim_create_augroup(CONTINUOUS_TESTING, { clear = true })
 
-local continuous_testing_active = {}
 local autocmd = nil
 local testing_module = nil
 
@@ -20,13 +20,12 @@ local testing_module = nil
 -- @param bufnr The bufnr of the test file
 local stop_continuous_testing_cmd = function(bufnr)
     return function()
-        continuous_testing_active[bufnr] = false
-
+        testing_module.clear_test_results(bufnr)
         vim.api.nvim_del_autocmd(autocmd)
         vim.api.nvim_buf_del_user_command(bufnr, STOP_CONTINUOUS_TESTING)
         vim.api.nvim_buf_del_user_command(bufnr, CONTINUOUS_TESTING_DIALOG)
 
-        testing_module.clear_test_results(bufnr)
+        state.detach(bufnr)
     end
 end
 
@@ -50,7 +49,7 @@ end
 -- @param cmd Test command to execute
 -- @param pattern Execute the autocmd on save for files with this pattern
 local attach_on_save_autocmd = function(bufnr, cmd, pattern)
-    continuous_testing_active[bufnr] = true
+    state.attach(bufnr)
 
     autocmd = vim.api.nvim_create_autocmd("BufWritePost", {
         group = group,
@@ -62,8 +61,9 @@ end
 local start_continuous_testing = function()
     local bufnr = vim.api.nvim_get_current_buf()
 
-    if continuous_testing_active[bufnr] then
-        notify("ContinuousTesting is already active", vim.log.levels.INFO)
+    if state.is_attached(bufnr) then
+        notify("ContinuousTesting is already active", vim.log.levels.WARN)
+
         return
     end
 
@@ -79,7 +79,7 @@ local start_continuous_testing = function()
         )
 
     if testing_module == nil then
-        notify.open("No testing module found", vim.log.levels.WARN)
+        notify("No testing module found", vim.log.levels.WARN)
         return
     end
 

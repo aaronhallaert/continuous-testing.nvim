@@ -22,18 +22,22 @@ M.set_user_specific_config = function(user_config)
 end
 
 M.get_config = function()
-    local framework_config = utils.deepcopy_table(config.framework_setup)
+    local merged_config = utils.deepcopy_table(config.framework_setup)
 
     local project_framework_config =
         utils.deepcopy_table(config.project_override[vim.fn.getcwd()])
 
     if project_framework_config ~= nil then
         for k, v in pairs(project_framework_config) do
-            framework_config[k] = v
+            merged_config[k] = v
         end
     end
 
-    return framework_config
+    for k, v in pairs(config) do
+        merged_config[k] = v
+    end
+
+    return merged_config
 end
 
 return M
