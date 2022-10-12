@@ -1,0 +1,87 @@
+======================================================================================
+                                                          *continuous-testing*
+
+
+This plugin attaches test files to autocommands. These tests will be executed
+on every file change of a certain file type depending on the test framework.
+Run tests async on save, add to diagnostics, get notified on failures.
+
+
+======================================================================================
+1. Plugin structure                                       *continuous-testing.structure*
+
+- init
+- commands
+- config
+- dialog
+- notify
+- state
+- telescope
+- utils
+
+                                                          *continuous-testing.signs*
+This plugin defines following signs to set in the
+|continuous-testing.test_module.test_result_handler()|
+
+- test_success = ✅
+- test_failure = ❌
+- test_skipped = ⏭️
+- test_other = ❓
+
+======================================================================================
+2. Supported test frameworks                              *continuous-testing.test_frameworks*
+
+When adding support for a test framework, place the implemented framework under `languages/$FILETYPE/$FRAMEWORK.lua`.
+
+This file should contain the following functions:
+
+
+test_module.test_result_handler({bufnr}, {cmd})           *continuous-testing.test_module.test_result_handler()*
+    Returns a function which will run (a test job) every time files are changed.
+    This is the main autocommand callback.
+    In general, it should handle the following things:
+      - Run the test of the bufnr.
+      - Parse the output.
+      - Set diagnostics based on test results.
+      - Set vim signs based on test results.
+
+    Parameters: 
+      {bufnr}  (number) The bufnr of the test file.
+      {cmd}    (string) A command to execute the test with a placeholder `%file`.
+
+    Return:
+      Callback function which runs on every autocmd
+
+
+test_module.clear_test_results({bufnr})                   *continuous-testing.test_module.clear_test_results()*
+    Clears the namespace of diagnostics, unplaces all vim signs and clears
+    (not remove) the global state for the current bufnr.
+
+    Parameters: 
+      {bufnr}  (number) The bufnr of the test file.
+
+
+*continuous-testing.ruby.rspec*
+
+State table specifications:
+
+{ 
+    version = ...,
+    seed = ...,
+    tests = {{
+        status = ..., // "passed", "failed", "pending"
+        description = ...,
+        file_path = ...,
+        line_number = ...,
+        run_time = ...,
+        exception = {
+            class = ...,
+            message = ...,
+            backtrace = ...,
+        }
+    }},
+    diagnostics = {} 
+}
+
+
+vim:tw=78:ts=8:ft=help:norl:
