@@ -35,8 +35,13 @@ When adding support for a test framework, place the implemented framework under 
 
 This file should contain the following functions:
 
+test_module.command({bufnr})                                    *continuous-testing.test_module.command()*
+    Returns the test command which should be executed.
 
-test_module.test_result_handler({bufnr}, {cmd})           *continuous-testing.test_module.test_result_handler()*
+    Parameters: 
+      {bufnr}  (number) The bufnr of the test file.
+
+test_module.test_result_handler({bufnr}, {cmd})                *continuous-testing.test_module.test_result_handler()*
     Returns a function which will run (a test job) every time files are changed.
     This is the main autocommand callback.
     In general, it should handle the following things:
@@ -53,12 +58,20 @@ test_module.test_result_handler({bufnr}, {cmd})           *continuous-testing.te
       Callback function which runs on every autocmd
 
 
-test_module.clear_test_results({bufnr})                   *continuous-testing.test_module.clear_test_results()*
+test_module.clear_test_results({bufnr})                        *continuous-testing.test_module.clear_test_results()*
     Clears the namespace of diagnostics, unplaces all vim signs and clears
     (not remove) the global state for the current bufnr.
 
     Parameters: 
       {bufnr}  (number) The bufnr of the test file.
+
+test_module.testing_dialog_message({bufnr}, {line_position})    *continuous-testing.test_module.testing_dialog_message()*
+    Returns the failure message including a backtrace on this position.
+    Ideally, this can be retrieved from the global state.
+
+    Parameters: 
+      {bufnr}          (number) The bufnr of the test file.
+      {line_position}  (number) The line number of the failing test.
 
 
 *continuous-testing.ruby.rspec*
@@ -68,7 +81,8 @@ State table specifications:
 { 
     version = ...,
     seed = ...,
-    tests = {{
+    tests = {
+    [line_number]: {
         status = ..., // "passed", "failed", "pending"
         description = ...,
         file_path = ...,
@@ -88,17 +102,14 @@ State table specifications:
 State table specifications:
 {
     numTotalTests = ...,
-    testResults = {
-        {
-            assertionResults = {
-                {
+    tests = {
+        [line_number]: {
                     ancestorTitles = {},
                     fullName = ...,
                     status = ...,
                     title = ...,
                     duration = ...,
                     failureMessages = {},
-                },
             },
         },
     },

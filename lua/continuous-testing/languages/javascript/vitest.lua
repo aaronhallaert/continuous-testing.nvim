@@ -1,23 +1,23 @@
--- namespace for diagnostics
-local notify = require("continuous-testing.utils.notify")
 local config = require("continuous-testing.config")
+local state = require("continuous-testing.state").get_state
+local update_state = require("continuous-testing.state").update_state
 
+-- utils
 local table_util = require("continuous-testing.utils.table")
 local file_util = require("continuous-testing.utils.file")
 local format = require("continuous-testing.utils.format")
+local notify = require("continuous-testing.utils.notify")
 
-local state = require("continuous-testing.state").get_state
-local update_state = require("continuous-testing.state").update_state
+-- namespace for diagnostics
 local ns = vim.api.nvim_create_namespace("ContinuousVitestTesting")
 
 local get_json_table = function(path)
-    local myTable = {}
     local file = io.open(path, "r")
 
     if file then
         -- read all contents of file into a string
         local contents = file:read("*a")
-        myTable = vim.json.decode(contents)
+        local myTable = vim.json.decode(contents)
         io.close(file)
         return myTable
     end
@@ -59,42 +59,84 @@ M.clear_test_results = function(bufnr)
     update_state(bufnr, table_util.deepcopy_table(EMPTY_STATE))
 end
 
-local get_root = function(bufnr)
+local get_treesitter_root = function(bufnr)
     local parser = vim.treesitter.get_parser(bufnr, "javascript", {})
     local tree = parser:parse()[1]
     return tree:root()
 end
 
+local ts_query_tests = vim.treesitter.parse_query(
+    "javascript",
+    [[
+    (expression_statement
+      (call_expression
+        function: (identifier) @id (#eq? @id "it")
+        arguments: (arguments
+            (string
+              (string_fragment) @str
+            )
+          )
+        )
+    )
+    ]]
+)
+
+-- returns a table with key (linenumber) and value (testTable)
+local generate_state = function(bufnr)
+    -- open json file
+    local test_output = get_json_table(output_file)
+    if test_output == nil then
+        notify(
+            { "No data for test" },
+            vim.log.levels.WARN,
+            vim.fn.expand("#" .. bufnr .. ":t")
+        )
+        return
+    end
+
+    local test_table = {}
+    -- search the line number for every test_output
+    for _, test in ipairs(test_output.testResults[1].assertionResults) do
+        local root = get_treesitter_root(bufnr)
+        -- search line number with treesitter
+
+        local line_number = function()
+            for id, node in ts_query_tests:iter_captures(root, bufnr, 0, -1) do
+                local name = ts_query_tests.captures[id]
+                if name == "str" then
+                    -- {start row, start col, end row, end col}
+                    local range = { node:range() }
+                    local match = vim.treesitter.get_node_text(node, bufnr)
+                    if string.find(test.fullName, match) then
+                        return range[1]
+                    end
+                end
+            end
+        end
+
+        local line = line_number() + 1
+        test_table[line] = test
+    end
+
+    table_util.merge_table(state(bufnr), { tests = test_table })
+
+    test_output.testResults = nil
+    table_util.merge_table(state(bufnr), test_output)
+end
+
 local on_exit_callback = function(bufnr)
     return function(_, exit_code, _)
-        -- open json file
-        local test_output = get_json_table(output_file)
-        if test_output == nil then
-            notify(
-                { "No data for test" },
-                vim.log.levels.WARN,
-                vim.fn.expand("#" .. bufnr .. ":t")
-            )
-            return
-        end
-        local new_state = state(bufnr)
-        for k, v in pairs(test_output) do
-            new_state[k] = v
-        end
-
-        update_state(bufnr, new_state)
+        generate_state(bufnr)
+        local test_state = state(bufnr)
 
         --exit_code 143 means SIGTERM
-        if
-            next(state(bufnr).testResults[1].assertionResults) == nil
-            and exit_code ~= 143
-        then
+        if next(test_state.tests) == nil and exit_code ~= 143 then
             notify({
-                "No test results for " .. vim.fn.expand("#" .. bufnr .. ":t"),
+                "No test results for " .. file_util.file_name(bufnr),
             }, vim.log.levels.ERROR)
         end
 
-        for _, test in pairs(state(bufnr).testResults[1].assertionResults) do
+        for line, test in pairs(test_state.tests) do
             local severity = vim.diagnostic.severity.ERROR
             local message = "Test Failed"
 
@@ -106,55 +148,20 @@ local on_exit_callback = function(bufnr)
                 message = "Test Skipped"
             end
 
-            local root = get_root(bufnr)
-            -- search line number with treesitter
-            local query_output = vim.treesitter.parse_query(
-                "javascript",
-                [[
-                    (expression_statement
-                      (call_expression
-                        function: (identifier) @id (#eq? @id "it")
-                        arguments: (arguments
-                            (string
-                              (string_fragment) @str
-                            )
-                          )
-                        )
-                    )
-              ]]
-            )
+            vim.fn.sign_unplace("", { buffer = bufnr, id = line })
 
-            local line_number = function()
-                for id, node in query_output:iter_captures(root, bufnr, 0, -1) do
-                    local name = query_output.captures[id]
-                    if name == "str" then
-                        -- {start row, start col, end row, end col}
-                        local range = { node:range() }
-                        local match = vim.treesitter.get_node_text(node, bufnr)
-                        if string.find(test.fullName, match) then
-                            return range[1]
-                        end
-                    end
-                end
-            end
-
-            local line = line_number()
-            test["line"] = line
-
-            local file_name = vim.fn.expand("#" .. bufnr)
-            local sign_line = line + 1
             vim.fn.sign_place(
-                file_name .. ":" .. sign_line,
+                line,
                 "continuous_tests", -- use default sign group so we can share animation instances.
                 get_sign(test.status),
                 bufnr,
-                { lnum = sign_line, priority = 100 }
+                { lnum = line, priority = 100 }
             )
 
             if severity ~= vim.diagnostic.severity.INFO then
-                table.insert(state(bufnr).diagnostics, {
+                table.insert(test_state.diagnostics, {
                     bufnr = bufnr,
-                    lnum = line,
+                    lnum = line - 1,
                     col = 0,
                     severity = severity,
                     source = "vitest",
@@ -164,12 +171,11 @@ local on_exit_callback = function(bufnr)
             end
         end
 
-        local log_level = test_output.numFailedTests > 0
-                and vim.log.levels.ERROR
+        local log_level = test_state.numFailedTests > 0 and vim.log.levels.ERROR
             or vim.log.levels.INFO
 
-        local message = test_output.numFailedTests > 0
-                and test_output.numFailedTests .. " failing tests"
+        local message = test_state.numFailedTests > 0
+                and test_state.numFailedTests .. " failing tests"
             or "All tests passed"
 
         notify(
@@ -178,16 +184,18 @@ local on_exit_callback = function(bufnr)
             "Vitest " .. vim.fn.expand("#" .. bufnr .. ":t")
         )
 
-        vim.diagnostic.set(ns, bufnr, state(bufnr).diagnostics, {})
+        vim.diagnostic.set(ns, bufnr, test_state.diagnostics, {})
     end
 end
 
-M.testing_dialog_message = function(--[[optional]]bufnr)
-    if bufnr == nil then
-        bufnr = 0
+M.testing_dialog_message = function(bufnr, line_position)
+    local message = state(bufnr).tests[line_position].failureMessages
+
+    if message == nil then
+        message = { "No failure found" }
     end
 
-    return { "This should be implemented" }
+    return message
 end
 
 M.test_result_handler = function(bufnr, cmd)
@@ -202,13 +210,27 @@ M.test_result_handler = function(bufnr, cmd)
 
         M.clear_test_results(bufnr)
 
-        local cwd = file_util.find_package_json_ancestor(
-            vim.fn.expand("#" .. bufnr .. ":p")
-        )
+        local root = get_treesitter_root(bufnr)
+        for id, node in ts_query_tests:iter_captures(root, bufnr, 0, -1) do
+            local name = ts_query_tests.captures[id]
+            if name == "str" then
+                -- {start row, start col, end row, end col}
+                local range = { node:range() }
+                vim.fn.sign_place(
+                    range[1] + 1,
+                    "continuous_tests", -- use default sign group so we can share animation instances.
+                    "test_running",
+                    bufnr,
+                    { lnum = range[1] + 1, priority = 100 }
+                )
+            end
+        end
 
-        local relative_cwd = file_util.find_package_json_ancestor(
-            vim.fn.expand("#" .. bufnr .. ":f")
-        )
+        local cwd =
+            file_util.find_package_json_ancestor(file_util.absolute_path(bufnr))
+
+        local relative_cwd =
+            file_util.find_package_json_ancestor(file_util.relative_path(bufnr))
 
         cmd = string.gsub(cmd, relative_cwd .. "/", "")
 

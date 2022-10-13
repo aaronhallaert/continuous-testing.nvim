@@ -1,4 +1,3 @@
-local config_helper = require("continuous-testing.config")
 local dialog = require("continuous-testing.utils.dialog")
 local notify = require("continuous-testing.utils.notify")
 local state = require("continuous-testing.state")
@@ -32,7 +31,8 @@ end
 -- @param bufnr The bufnr of the test file
 local open_test_output_dialog_cmd = function(bufnr)
     return function()
-        local message = testing_module.testing_dialog_message(bufnr)
+        local line_pos = vim.fn.line(".")
+        local message = testing_module.testing_dialog_message(bufnr, line_pos)
 
         if message == nil then
             notify("No content to fill the dialog with", vim.log.levels.WARN)
@@ -57,18 +57,14 @@ local attach_on_save_autocmd = function(bufnr, cmd, pattern)
     })
 end
 
-local start_continuous_testing = function()
+local attach_test = function()
     local bufnr = vim.api.nvim_get_current_buf()
 
     if state.is_attached(bufnr) then
         notify("ContinuousTesting is already active", vim.log.levels.WARN)
-
         return
     end
 
-    local config = config_helper.get_config()
-
-    local filename = vim.fn.expand("%")
     local filetype = vim.fn.expand("%:e")
     local filetype_pattern = "*." .. filetype
 
@@ -82,6 +78,7 @@ local start_continuous_testing = function()
         return
     end
 
+    -- Attach an autocmd to all files with filetype_pattern, which will run the test
     attach_on_save_autocmd(
         bufnr,
         testing_module.command(bufnr),
@@ -106,11 +103,7 @@ local start_continuous_testing = function()
 end
 
 M.setup = function()
-    vim.api.nvim_create_user_command(
-        CONTINUOUS_TESTING,
-        start_continuous_testing,
-        {}
-    )
+    vim.api.nvim_create_user_command(CONTINUOUS_TESTING, attach_test, {})
 
     vim.api.nvim_create_user_command(
         ATTACHED_TESTS,

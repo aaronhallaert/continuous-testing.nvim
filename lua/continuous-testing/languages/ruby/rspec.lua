@@ -1,13 +1,14 @@
--- namespace for diagnostics
-local ns = vim.api.nvim_create_namespace("ContinuousRubyTesting")
-
-local table_util = require("continuous-testing.utils.table")
-local format = require("continuous-testing.utils.format")
-
 local config = require("continuous-testing.config")
 local state = require("continuous-testing.state").get_state
-local notify = require("continuous-testing.utils.notify")
 local update_state = require("continuous-testing.state").update_state
+
+-- utils
+local table_util = require("continuous-testing.utils.table")
+local format = require("continuous-testing.utils.format")
+local notify = require("continuous-testing.utils.notify")
+
+-- namespace for diagnostics
+local ns = vim.api.nvim_create_namespace("ContinuousRubyTesting")
 
 local M = {}
 
@@ -27,6 +28,12 @@ local function get_sign(test_result)
         sign_name = "test_other"
     end
     return sign_name
+end
+
+local get_treesitter_root = function(bufnr)
+    local parser = vim.treesitter.get_parser(bufnr, "ruby", {})
+    local tree = parser:parse()[1]
+    return tree:root()
 end
 
 -- clean up specific tests state of buffer
@@ -75,8 +82,8 @@ local on_exit_callback = function(bufnr)
     end
 end
 
-M.testing_dialog_message = function(bufnr)
-    local test_key = "./" .. vim.fn.expand("%") .. ":" .. vim.fn.line(".")
+M.testing_dialog_message = function(bufnr, line_position)
+    local test_key = line_position
 
     local test = state(bufnr).tests[test_key]
     if not test or test.status ~= TEST_RESULTS.FAILED then
@@ -130,6 +137,31 @@ M.test_result_handler = function(bufnr, cmd)
 
         M.clear_test_results(bufnr)
 
+        local root = get_treesitter_root(bufnr)
+        local query_output = vim.treesitter.parse_query(
+            "ruby",
+            [[
+                (call
+                method: (identifier) @id (#eq? @id "it")
+                )
+            ]]
+        )
+
+        for id, node in query_output:iter_captures(root, bufnr, 0, -1) do
+            local name = query_output.captures[id]
+            if name == "id" then
+                -- {start row, start col, end row, end col}
+                local range = { node:range() }
+                vim.fn.sign_place(
+                    range[1],
+                    "continuous_tests", -- use default sign group so we can share animation instances.
+                    "test_running",
+                    bufnr,
+                    { lnum = range[1] + 1, priority = 100 }
+                )
+            end
+        end
+
         local append_data = function(_, data)
             if not data then
                 notify({ "No data for test" }, vim.log.levels.WARN)
@@ -144,11 +176,14 @@ M.test_result_handler = function(bufnr, cmd)
                     state(bufnr).seed = decoded.seed
 
                     for _, test in pairs(decoded.examples) do
-                        state(bufnr).tests[test.file_path .. ":" .. test.line_number] =
-                            test
+                        state(bufnr).tests[test.line_number] = test
+                        vim.fn.sign_unplace(
+                            "",
+                            { buffer = bufnr, id = test.line_number }
+                        )
 
                         vim.fn.sign_place(
-                            test.file_path .. ":" .. test.line_number,
+                            test.line_number,
                             "continuous_tests", -- use default sign group so we can share animation instances.
                             get_sign(test.status),
                             bufnr,

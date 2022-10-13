@@ -3,6 +3,22 @@ local validate = vim.validate
 
 local M = {}
 
+M.relative_path = function(bufnr)
+    return vim.fn.expand("#" .. bufnr .. ":f")
+end
+
+M.file_name = function(bufnr)
+    return vim.fn.expand("#" .. bufnr .. ":t")
+end
+
+M.absolute_path = function(bufnr)
+    return vim.fn.expand("#" .. bufnr .. ":p")
+end
+
+M.extension = function(bufnr)
+    return vim.fn.expand("#" .. bufnr .. ":e")
+end
+
 M.path = (function()
     local is_windows = uv.os_uname().version:match("Windows")
 

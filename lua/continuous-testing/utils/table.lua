@@ -15,4 +15,10 @@ M.deepcopy_table = function(orig)
     return copy
 end
 
+M.merge_table = function(orig, new)
+    for k, v in pairs(new) do
+        orig[k] = v
+    end
+end
+
 return M
