@@ -2,6 +2,7 @@
 local ns = vim.api.nvim_create_namespace("ContinuousRubyTesting")
 local utils = require("continuous-testing.utils")
 local state = require("continuous-testing.state").get_state
+local notify = require("continuous-testing.notify")
 local update_state = require("continuous-testing.state").update_state
 
 local M = {}
@@ -35,7 +36,14 @@ M.clear_test_results = function(bufnr)
 end
 
 local on_exit_callback = function(bufnr)
-    return function()
+    return function(_, exit_code, _)
+        -- exit_code 143 means SIGTERM
+        if next(state(bufnr).tests) == nil and exit_code ~= 143 then
+            notify({
+                "No test results for " .. vim.fn.expand("#" .. bufnr .. ":t"),
+            }, vim.log.levels.ERROR)
+        end
+
         for _, test in pairs(state(bufnr).tests) do
             local severity = vim.diagnostic.severity.ERROR
             local message = "Test Failed"
@@ -102,7 +110,7 @@ M.testing_dialog_message = function(bufnr)
 end
 
 M.test_result_handler = function(bufnr, cmd)
-    vim.notify(
+    notify(
         { "Adding " .. vim.fn.expand("#" .. bufnr .. ":t") },
         vim.log.levels.INFO
     )
@@ -112,54 +120,58 @@ M.test_result_handler = function(bufnr, cmd)
     update_state(bufnr, init_state)
 
     return function()
+        if state(bufnr)["job"] ~= nil then
+            vim.fn.jobstop(state(bufnr)["job"])
+        end
+
         M.clear_test_results(bufnr)
 
         local append_data = function(_, data)
             if not data then
-                vim.notify({ "No data for test" }, vim.log.levels.WARN)
+                notify({ "No data for test" }, vim.log.levels.WARN)
                 return
             end
 
             for _, line in ipairs(data) do
-                if not string.find(line, "{") then
-                    return
-                end
+                if string.find(line, "{") then
+                    local decoded = vim.json.decode(line)
 
-                local decoded = vim.json.decode(line)
+                    state(bufnr).version = decoded.version
+                    state(bufnr).seed = decoded.seed
 
-                state(bufnr).version = decoded.version
-                state(bufnr).seed = decoded.seed
+                    for _, test in pairs(decoded.examples) do
+                        state(bufnr).tests[test.file_path .. ":" .. test.line_number] =
+                            test
 
-                for _, test in pairs(decoded.examples) do
-                    state(bufnr).tests[test.file_path .. ":" .. test.line_number] =
-                        test
+                        vim.fn.sign_place(
+                            test.file_path .. ":" .. test.line_number,
+                            "continuous_tests", -- use default sign group so we can share animation instances.
+                            get_sign(test.status),
+                            bufnr,
+                            { lnum = test.line_number, priority = 100 }
+                        )
+                    end
 
-                    vim.fn.sign_place(
-                        test.file_path .. ":" .. test.line_number,
-                        "continuous_tests", -- use default sign group so we can share animation instances.
-                        get_sign(test.status),
-                        bufnr,
-                        { lnum = test.line_number, priority = 100 }
+                    local log_level = decoded.summary.failure_count > 0
+                            and vim.log.levels.ERROR
+                        or vim.log.levels.INFO
+                    notify(
+                        decoded.summary_line,
+                        log_level,
+                        "RSpec " .. vim.fn.expand("#" .. bufnr .. ":t")
                     )
                 end
-
-                local log_level = decoded.summary.failure_count > 0
-                        and vim.log.levels.ERROR
-                    or vim.log.levels.INFO
-                vim.notify(
-                    decoded.summary_line,
-                    log_level,
-                    { title = "RSpec " .. vim.fn.expand("#" .. bufnr .. ":t") }
-                )
             end
         end
 
-        vim.fn.jobstart(cmd, {
+        local job_id = vim.fn.jobstart(cmd, {
             stdout_buffered = true,
             on_stdout = append_data,
             on_stderr = append_data,
             on_exit = on_exit_callback(bufnr),
         })
+
+        state(bufnr)["job"] = job_id
     end
 end
 
