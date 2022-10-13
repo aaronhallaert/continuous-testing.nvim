@@ -37,6 +37,11 @@ require("continuous-testing").setup {
             test_tool = "rspec",
             test_cmd = "bundle exec rspec %file --format json --no-fail-fast",
         }
+        javascript = {
+            test_tool = "vitest", -- cwd of the executing test will be at package.json
+            test_cmd = "yarn vitest run %file",
+            root_pattern = "tsconfig.json", -- used to populate the root option of vitest
+        },
     },
     project_override = {
         ["/Users/name/Developer/ruby-project"] = {
