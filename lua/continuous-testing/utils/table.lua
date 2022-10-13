@@ -1,9 +1,5 @@
 local M = {}
 
-M.inject_file_to_test_command = function(test_command, file)
-    return test_command:gsub("%%file", file)
-end
-
 M.deepcopy_table = function(orig)
     local orig_type = type(orig)
     local copy
@@ -17,6 +13,12 @@ M.deepcopy_table = function(orig)
         copy = orig
     end
     return copy
+end
+
+M.merge_table = function(orig, new)
+    for k, v in pairs(new) do
+        orig[k] = v
+    end
 end
 
 return M

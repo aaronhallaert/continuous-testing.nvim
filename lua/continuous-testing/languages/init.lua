@@ -1,9 +1,15 @@
 local config_helper = require("continuous-testing.config")
-local notify = require("continuous-testing.notify")
+local notify = require("continuous-testing.utils.notify")
 
 local M = {}
 
-local FILE_TYPES = { rb = "ruby" }
+local FILE_TYPES = {
+    rb = "ruby",
+    ts = "javascript",
+    js = "javascript",
+    tsx = "javascript",
+    jsx = "javascript",
+}
 
 local resolve_testing_module = function(language, test_tool)
     return require(

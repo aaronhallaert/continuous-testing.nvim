@@ -1,3 +1,5 @@
+local file_util = require("continuous-testing.utils.file")
+
 -- {[bufnr] : { ...state... }}
 local global_test_state = {}
 
@@ -33,7 +35,9 @@ end
 M.attached_tests = function()
     local files = {}
     for k, _ in pairs(global_test_state) do
-        local file = vim.fn.expand("#" .. k .. ":f")
+        local file = file_util.relative_path(k)
+            .. " "
+            .. M.get_state(k).telescope_status
         table.insert(files, file)
     end
 

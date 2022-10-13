@@ -10,23 +10,22 @@ Run tests async on save, add to diagnostics, get notified on failures.
 ======================================================================================
 1. Plugin structure                                       *continuous-testing.structure*
 
-- init
-- commands
-- config
-- dialog
-- notify
-- state
-- telescope
-- utils
+- languages/        Implementation of testing frameworks
+- utils/            All utils which could in theory be used outside of this plugin
+- commands.lua      Setup of autocmds etc
+- config.lua        Responsible for parsing the user config
+- state.lua         Keeps track of the global state
+- telescope.lua     Responsible for the telescope window
 
                                                           *continuous-testing.signs*
 This plugin defines following signs to set in the
 |continuous-testing.test_module.test_result_handler()|
 
-- test_success = ✅
-- test_failure = ❌
-- test_skipped = ⏭️
-- test_other = ❓
+- test_success = 
+- test_failure = 
+- test_skipped = 
+- test_other = 
+- test_running = 
 
 ======================================================================================
 2. Supported test frameworks                              *continuous-testing.test_frameworks*
@@ -35,8 +34,13 @@ When adding support for a test framework, place the implemented framework under 
 
 This file should contain the following functions:
 
+test_module.command({bufnr})                                    *continuous-testing.test_module.command()*
+    Returns the test command which should be executed.
 
-test_module.test_result_handler({bufnr}, {cmd})           *continuous-testing.test_module.test_result_handler()*
+    Parameters: 
+      {bufnr}  (number) The bufnr of the test file.
+
+test_module.test_result_handler({bufnr}, {cmd})                *continuous-testing.test_module.test_result_handler()*
     Returns a function which will run (a test job) every time files are changed.
     This is the main autocommand callback.
     In general, it should handle the following things:
@@ -53,12 +57,20 @@ test_module.test_result_handler({bufnr}, {cmd})           *continuous-testing.te
       Callback function which runs on every autocmd
 
 
-test_module.clear_test_results({bufnr})                   *continuous-testing.test_module.clear_test_results()*
+test_module.clear_test_results({bufnr})                        *continuous-testing.test_module.clear_test_results()*
     Clears the namespace of diagnostics, unplaces all vim signs and clears
     (not remove) the global state for the current bufnr.
 
     Parameters: 
       {bufnr}  (number) The bufnr of the test file.
+
+test_module.testing_dialog_message({bufnr}, {line_position})    *continuous-testing.test_module.testing_dialog_message()*
+    Returns the failure message including a backtrace on this position.
+    Ideally, this can be retrieved from the global state.
+
+    Parameters: 
+      {bufnr}          (number) The bufnr of the test file.
+      {line_position}  (number) The line number of the failing test.
 
 
 *continuous-testing.ruby.rspec*
@@ -68,20 +80,42 @@ State table specifications:
 { 
     version = ...,
     seed = ...,
-    tests = {{
-        status = ..., // "passed", "failed", "pending"
-        description = ...,
-        file_path = ...,
-        line_number = ...,
-        run_time = ...,
-        exception = {
-            class = ...,
-            message = ...,
-            backtrace = ...,
+    tests = {
+        [line_number]: {
+            status = ..., // "passed", "failed", "pending"
+            description = ...,
+            file_path = ...,
+            line_number = ...,
+            run_time = ...,
+            exception = {
+                class = ...,
+                message = ...,
+                backtrace = ...,
+            }
         }
-    }},
+    },
+    telescope_status = {},
     diagnostics = {} 
 }
 
+*continuous-testing.typescript.vitest*
+
+State table specifications:
+{
+    numTotalTests = ...,
+    tests = {
+        [line_number]: {
+                ancestorTitles = {},
+                fullName = ...,
+                status = ...,
+                title = ...,
+                duration = ...,
+                failureMessages = {},
+            },
+        },
+    },
+    telescope_status = {},
+    diagnostics = {}
+}
 
 vim:tw=78:ts=8:ft=help:norl:

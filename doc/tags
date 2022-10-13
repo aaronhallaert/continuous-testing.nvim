@@ -4,4 +4,7 @@ continuous-testing.signs	continuous-testing.txt	/*continuous-testing.signs*
 continuous-testing.structure	continuous-testing.txt	/*continuous-testing.structure*
 continuous-testing.test_frameworks	continuous-testing.txt	/*continuous-testing.test_frameworks*
 continuous-testing.test_module.clear_test_results()	continuous-testing.txt	/*continuous-testing.test_module.clear_test_results()*
+continuous-testing.test_module.command()	continuous-testing.txt	/*continuous-testing.test_module.command()*
 continuous-testing.test_module.test_result_handler()	continuous-testing.txt	/*continuous-testing.test_module.test_result_handler()*
+continuous-testing.test_module.testing_dialog_message()	continuous-testing.txt	/*continuous-testing.test_module.testing_dialog_message()*
+continuous-testing.typescript.vitest	continuous-testing.txt	/*continuous-testing.typescript.vitest*

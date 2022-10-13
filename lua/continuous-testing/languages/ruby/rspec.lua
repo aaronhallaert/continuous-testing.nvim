@@ -1,46 +1,34 @@
--- namespace for diagnostics
-local ns = vim.api.nvim_create_namespace("ContinuousRubyTesting")
-local utils = require("continuous-testing.utils")
+local config = require("continuous-testing.config")
 local state = require("continuous-testing.state").get_state
-local notify = require("continuous-testing.notify")
-local update_state = require("continuous-testing.state").update_state
+
+-- utils
+local file_util = require("continuous-testing.utils.file")
+local format = require("continuous-testing.utils.format")
+local notify = require("continuous-testing.utils.notify")
+
+-- implementation helper
+local common = require("continuous-testing.languages.common")
 
 local M = {}
 
-local EMPTY_STATE = { version = nil, seed = nil, tests = {}, diagnostics = {} }
 local TEST_RESULTS =
     { SUCCESS = "passed", FAILED = "failed", SKIPPED = "pending" }
 
-local function get_sign(test_result)
-    local sign_name
-    if test_result == TEST_RESULTS.SUCCESS then
-        sign_name = "test_success"
-    elseif test_result == TEST_RESULTS.FAILED then
-        sign_name = "test_failure"
-    elseif test_result == TEST_RESULTS.SKIPPED then
-        sign_name = "test_skipped"
-    else
-        sign_name = "test_other"
-    end
-    return sign_name
-end
-
--- clean up specific tests state of buffer
--- @param bufnr Bufnr of test file
-M.clear_test_results = function(bufnr)
-    vim.diagnostic.reset(ns, bufnr)
-    vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
-    vim.fn.sign_unplace("continuous_tests", { buffer = bufnr })
-
-    update_state(bufnr, utils.deepcopy_table(EMPTY_STATE))
-end
+local ts_query_tests = vim.treesitter.parse_query(
+    "ruby",
+    [[
+        (call
+        method: (identifier) @id (#eq? @id "it")
+        )
+    ]]
+)
 
 local on_exit_callback = function(bufnr)
     return function(_, exit_code, _)
         -- exit_code 143 means SIGTERM
         if next(state(bufnr).tests) == nil and exit_code ~= 143 then
             notify({
-                "No test results for " .. vim.fn.expand("#" .. bufnr .. ":t"),
+                "No test results for " .. file_util.file_name(bufnr),
             }, vim.log.levels.ERROR)
         end
 
@@ -67,12 +55,12 @@ local on_exit_callback = function(bufnr)
             })
         end
 
-        vim.diagnostic.set(ns, bufnr, state(bufnr).diagnostics, {})
+        vim.diagnostic.set(common.ns, bufnr, state(bufnr).diagnostics, {})
     end
 end
 
-M.testing_dialog_message = function(bufnr)
-    local test_key = "./" .. vim.fn.expand("%") .. ":" .. vim.fn.line(".")
+M.testing_dialog_message = function(bufnr, line_position)
+    local test_key = line_position
 
     local test = state(bufnr).tests[test_key]
     if not test or test.status ~= TEST_RESULTS.FAILED then
@@ -110,21 +98,31 @@ M.testing_dialog_message = function(bufnr)
 end
 
 M.test_result_handler = function(bufnr, cmd)
-    notify(
-        { "Adding " .. vim.fn.expand("#" .. bufnr .. ":t") },
-        vim.log.levels.INFO
-    )
-
-    local init_state = utils.deepcopy_table(EMPTY_STATE)
-    init_state["bufnr"] = bufnr
-    update_state(bufnr, init_state)
+    notify({ "Adding " .. file_util.file_name(bufnr) }, vim.log.levels.INFO)
 
     return function()
         if state(bufnr)["job"] ~= nil then
             vim.fn.jobstop(state(bufnr)["job"])
         end
 
-        M.clear_test_results(bufnr)
+        common.clear_test_results(bufnr)
+
+        local root = format.get_treesitter_root(bufnr, "ruby")
+
+        for id, node in ts_query_tests:iter_captures(root, bufnr, 0, -1) do
+            local name = ts_query_tests.captures[id]
+            if name == "id" then
+                -- {start row, start col, end row, end col}
+                local range = { node:range() }
+                vim.fn.sign_place(
+                    range[1],
+                    "continuous_tests", -- use default sign group so we can share animation instances.
+                    "test_running",
+                    bufnr,
+                    { lnum = range[1] + 1, priority = 100 }
+                )
+            end
+        end
 
         local append_data = function(_, data)
             if not data then
@@ -140,25 +138,34 @@ M.test_result_handler = function(bufnr, cmd)
                     state(bufnr).seed = decoded.seed
 
                     for _, test in pairs(decoded.examples) do
-                        state(bufnr).tests[test.file_path .. ":" .. test.line_number] =
-                            test
+                        state(bufnr).tests[test.line_number] = test
+                        vim.fn.sign_unplace(
+                            "",
+                            { buffer = bufnr, id = test.line_number }
+                        )
 
                         vim.fn.sign_place(
-                            test.file_path .. ":" .. test.line_number,
+                            test.line_number,
                             "continuous_tests", -- use default sign group so we can share animation instances.
-                            get_sign(test.status),
+                            common.get_sign(test.status, TEST_RESULTS),
                             bufnr,
                             { lnum = test.line_number, priority = 100 }
                         )
                     end
 
-                    local log_level = decoded.summary.failure_count > 0
-                            and vim.log.levels.ERROR
-                        or vim.log.levels.INFO
+                    local log_level
+                    if decoded.summary.failure_count > 0 then
+                        log_level = vim.log.levels.ERROR
+                        state(bufnr).telescope_status = "🚫"
+                    else
+                        log_level = vim.log.levels.INFO
+                        state(bufnr).telescope_status = "✅"
+                    end
+
                     notify(
                         decoded.summary_line,
                         log_level,
-                        "RSpec " .. vim.fn.expand("#" .. bufnr .. ":t")
+                        "RSpec " .. file_util.file_name(bufnr)
                     )
                 end
             end
@@ -173,6 +180,14 @@ M.test_result_handler = function(bufnr, cmd)
 
         state(bufnr)["job"] = job_id
     end
+end
+
+M.command = function(bufnr)
+    local path = file_util.relative_path(bufnr)
+    return format.inject_file_to_test_command(
+        config.get_config().ruby.test_cmd,
+        path
+    ) .. " --format  json --no-fail-fast"
 end
 
 return M
