@@ -19,6 +19,19 @@ M.extension = function(bufnr)
     return vim.fn.expand("#" .. bufnr .. ":e")
 end
 
+M.get_json_table = function(path)
+    local file = io.open(path, "r")
+
+    if file then
+        -- read all contents of file into a string
+        local contents = file:read("*a")
+        local myTable = vim.json.decode(contents)
+        io.close(file)
+        return myTable
+    end
+    return nil
+end
+
 M.path = (function()
     local is_windows = uv.os_uname().version:match("Windows")
 

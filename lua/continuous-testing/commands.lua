@@ -1,6 +1,7 @@
 local dialog = require("continuous-testing.utils.dialog")
 local notify = require("continuous-testing.utils.notify")
 local state = require("continuous-testing.state")
+local common = require("continuous-testing.languages.common")
 
 local ATTACHED_TESTS = "AttachedContinuousTests"
 local CONTINUOUS_TESTING = "ContinuousTesting"
@@ -18,7 +19,7 @@ local testing_module = nil
 -- @param bufnr The bufnr of the test file
 local stop_continuous_testing_cmd = function(bufnr)
     return function()
-        testing_module.clear_test_results(bufnr)
+        common.clear_test_results(bufnr)
         vim.api.nvim_del_autocmd(autocmd)
         vim.api.nvim_buf_del_user_command(bufnr, STOP_CONTINUOUS_TESTING)
         vim.api.nvim_buf_del_user_command(bufnr, CONTINUOUS_TESTING_DIALOG)
@@ -49,6 +50,7 @@ end
 -- @param pattern Execute the autocmd on save for files with this pattern
 local attach_on_save_autocmd = function(bufnr, cmd, pattern)
     state.attach(bufnr)
+    common.clear_test_results(bufnr)
 
     autocmd = vim.api.nvim_create_autocmd("BufWritePost", {
         group = group,

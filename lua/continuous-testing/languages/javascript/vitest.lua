@@ -1,6 +1,5 @@
 local config = require("continuous-testing.config")
 local state = require("continuous-testing.state").get_state
-local update_state = require("continuous-testing.state").update_state
 
 -- utils
 local table_util = require("continuous-testing.utils.table")
@@ -8,62 +7,15 @@ local file_util = require("continuous-testing.utils.file")
 local format = require("continuous-testing.utils.format")
 local notify = require("continuous-testing.utils.notify")
 
--- namespace for diagnostics
-local ns = vim.api.nvim_create_namespace("ContinuousVitestTesting")
-
-local get_json_table = function(path)
-    local file = io.open(path, "r")
-
-    if file then
-        -- read all contents of file into a string
-        local contents = file:read("*a")
-        local myTable = vim.json.decode(contents)
-        io.close(file)
-        return myTable
-    end
-    return nil
-end
+-- implementation helpers
+local common = require("continuous-testing.languages.common")
 
 local TEST_RESULTS =
     { SUCCESS = "passed", FAILED = "failed", SKIPPED = "pending" }
 
-local function get_sign(test_result)
-    local sign_name
-    if test_result == TEST_RESULTS.SUCCESS then
-        sign_name = "test_success"
-    elseif test_result == TEST_RESULTS.FAILED then
-        sign_name = "test_failure"
-    elseif test_result == TEST_RESULTS.SKIPPED then
-        sign_name = "test_skipped"
-    else
-        sign_name = "test_other"
-    end
-    return sign_name
-end
-
-local output_file = "/tmp/vitest_test.json"
-
-local EMPTY_STATE = {
-    numTotalTests = nil,
-    testResults = {},
-    diagnostics = {},
-}
+local OUTPUT_FILE = "/tmp/vitest_test.json"
 
 local M = {}
-
-M.clear_test_results = function(bufnr)
-    vim.diagnostic.reset(ns, bufnr)
-    vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
-    vim.fn.sign_unplace("continuous_tests", { buffer = bufnr })
-
-    update_state(bufnr, table_util.deepcopy_table(EMPTY_STATE))
-end
-
-local get_treesitter_root = function(bufnr)
-    local parser = vim.treesitter.get_parser(bufnr, "javascript", {})
-    local tree = parser:parse()[1]
-    return tree:root()
-end
 
 local ts_query_tests = vim.treesitter.parse_query(
     "javascript",
@@ -84,12 +36,12 @@ local ts_query_tests = vim.treesitter.parse_query(
 -- returns a table with key (linenumber) and value (testTable)
 local generate_state = function(bufnr)
     -- open json file
-    local test_output = get_json_table(output_file)
+    local test_output = file_util.get_json_table(OUTPUT_FILE)
     if test_output == nil then
         notify(
             { "No data for test" },
             vim.log.levels.WARN,
-            vim.fn.expand("#" .. bufnr .. ":t")
+            file_util.file_name(bufnr)
         )
         return
     end
@@ -97,7 +49,7 @@ local generate_state = function(bufnr)
     local test_table = {}
     -- search the line number for every test_output
     for _, test in ipairs(test_output.testResults[1].assertionResults) do
-        local root = get_treesitter_root(bufnr)
+        local root = format.get_treesitter_root(bufnr, "javascript")
         -- search line number with treesitter
 
         local line_number = function()
@@ -153,7 +105,7 @@ local on_exit_callback = function(bufnr)
             vim.fn.sign_place(
                 line,
                 "continuous_tests", -- use default sign group so we can share animation instances.
-                get_sign(test.status),
+                common.get_sign(test.status, TEST_RESULTS),
                 bufnr,
                 { lnum = line, priority = 100 }
             )
@@ -171,20 +123,21 @@ local on_exit_callback = function(bufnr)
             end
         end
 
-        local log_level = test_state.numFailedTests > 0 and vim.log.levels.ERROR
-            or vim.log.levels.INFO
+        local log_level
+        local message
 
-        local message = test_state.numFailedTests > 0
-                and test_state.numFailedTests .. " failing tests"
-            or "All tests passed"
+        if test_state.numFailedTests > 0 then
+            log_level = vim.log.levels.ERROR
+            message = test_state.numFailedTests .. " failing tests"
+            state(bufnr).telescope_status = "🚫"
+        else
+            log_level = vim.log.levels.INFO
+            state(bufnr).telescope_status = "✅"
+            message = "All tests passed"
+        end
 
-        notify(
-            message,
-            log_level,
-            "Vitest " .. vim.fn.expand("#" .. bufnr .. ":t")
-        )
-
-        vim.diagnostic.set(ns, bufnr, test_state.diagnostics, {})
+        notify(message, log_level, "Vitest " .. file_util.file_name(bufnr))
+        vim.diagnostic.set(common.ns, bufnr, test_state.diagnostics, {})
     end
 end
 
@@ -199,18 +152,15 @@ M.testing_dialog_message = function(bufnr, line_position)
 end
 
 M.test_result_handler = function(bufnr, cmd)
-    local init_state = table_util.deepcopy_table(EMPTY_STATE)
-    init_state["bufnr"] = bufnr
-    update_state(bufnr, init_state)
-
     return function()
         if state(bufnr)["job"] ~= nil then
             vim.fn.jobstop(state(bufnr)["job"])
         end
 
-        M.clear_test_results(bufnr)
+        common.clear_test_results(bufnr)
 
-        local root = get_treesitter_root(bufnr)
+        local root = format.get_treesitter_root(bufnr, "javascript")
+
         for id, node in ts_query_tests:iter_captures(root, bufnr, 0, -1) do
             local name = ts_query_tests.captures[id]
             if name == "str" then
@@ -245,7 +195,7 @@ M.test_result_handler = function(bufnr, cmd)
 end
 
 M.command = function(bufnr)
-    local path = vim.fn.expand("#" .. bufnr .. ":f")
+    local path = file_util.relative_path(bufnr)
     local js_config = config.get_config().javascript
 
     -- search for rootfolder
@@ -254,7 +204,7 @@ M.command = function(bufnr)
 
     return format.inject_file_to_test_command(js_config.test_cmd, path)
         .. " --outputFile="
-        .. output_file
+        .. OUTPUT_FILE
         .. " --root="
         .. root_folder
         .. " --reporter=verbose  --reporter=json"
