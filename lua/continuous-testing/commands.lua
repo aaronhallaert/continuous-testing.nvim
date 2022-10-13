@@ -8,6 +8,13 @@ local CONTINUOUS_TESTING = "ContinuousTesting"
 local CONTINUOUS_TESTING_DIALOG = "ContinuousTestingDialog"
 local STOP_CONTINUOUS_TESTING = "StopContinuousTesting"
 
+local FILE_TYPE_PATTERNS = {
+    rb = "*.rb",
+    js = { ".js", ".jsx", ".ts", ".tsx" },
+    jsx = { ".js", ".jsx", ".ts", ".tsx" },
+    ts = { ".js", ".jsx", ".ts", ".tsx" },
+    tsx = { ".js", ".jsx", ".ts", ".tsx" },
+}
 local M = {}
 
 local group = vim.api.nvim_create_augroup(CONTINUOUS_TESTING, { clear = true })
@@ -84,7 +91,7 @@ local attach_test = function()
     attach_on_save_autocmd(
         bufnr,
         testing_module.command(bufnr),
-        filetype_pattern
+        FILE_TYPE_PATTERNS[filetype_pattern]
     )
 
     -- Create a user command to stop the continuous testing on the test file
