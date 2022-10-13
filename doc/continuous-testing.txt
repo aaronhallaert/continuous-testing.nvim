@@ -10,23 +10,22 @@ Run tests async on save, add to diagnostics, get notified on failures.
 ======================================================================================
 1. Plugin structure                                       *continuous-testing.structure*
 
-- init
-- commands
-- config
-- dialog
-- notify
-- state
-- telescope
-- utils
+- languages/        Implementation of testing frameworks
+- utils/            All utils which could in theory be used outside of this plugin
+- commands.lua      Setup of autocmds etc
+- config.lua        Responsible for parsing the user config
+- state.lua         Keeps track of the global state
+- telescope.lua     Responsible for the telescope window
 
                                                           *continuous-testing.signs*
 This plugin defines following signs to set in the
 |continuous-testing.test_module.test_result_handler()|
 
-- test_success = ✅
-- test_failure = ❌
-- test_skipped = ⏭️
-- test_other = ❓
+- test_success = 
+- test_failure = 
+- test_skipped = 
+- test_other = 
+- test_running = 
 
 ======================================================================================
 2. Supported test frameworks                              *continuous-testing.test_frameworks*
@@ -82,18 +81,20 @@ State table specifications:
     version = ...,
     seed = ...,
     tests = {
-    [line_number]: {
-        status = ..., // "passed", "failed", "pending"
-        description = ...,
-        file_path = ...,
-        line_number = ...,
-        run_time = ...,
-        exception = {
-            class = ...,
-            message = ...,
-            backtrace = ...,
+        [line_number]: {
+            status = ..., // "passed", "failed", "pending"
+            description = ...,
+            file_path = ...,
+            line_number = ...,
+            run_time = ...,
+            exception = {
+                class = ...,
+                message = ...,
+                backtrace = ...,
+            }
         }
-    }},
+    },
+    telescope_status = {},
     diagnostics = {} 
 }
 
@@ -104,15 +105,17 @@ State table specifications:
     numTotalTests = ...,
     tests = {
         [line_number]: {
-                    ancestorTitles = {},
-                    fullName = ...,
-                    status = ...,
-                    title = ...,
-                    duration = ...,
-                    failureMessages = {},
+                ancestorTitles = {},
+                fullName = ...,
+                status = ...,
+                title = ...,
+                duration = ...,
+                failureMessages = {},
             },
         },
     },
+    telescope_status = {},
     diagnostics = {}
 }
+
 vim:tw=78:ts=8:ft=help:norl:
