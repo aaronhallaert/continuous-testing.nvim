@@ -1,9 +1,12 @@
 -- namespace for diagnostics
 local ns = vim.api.nvim_create_namespace("ContinuousRubyTesting")
-local utils = require("continuous-testing.utils")
+
+local table_util = require("continuous-testing.utils.table")
+local format = require("continuous-testing.utils.format")
+
 local config = require("continuous-testing.config")
 local state = require("continuous-testing.state").get_state
-local notify = require("continuous-testing.notify")
+local notify = require("continuous-testing.utils.notify")
 local update_state = require("continuous-testing.state").update_state
 
 local M = {}
@@ -33,7 +36,7 @@ M.clear_test_results = function(bufnr)
     vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
     vim.fn.sign_unplace("continuous_tests", { buffer = bufnr })
 
-    update_state(bufnr, utils.deepcopy_table(EMPTY_STATE))
+    update_state(bufnr, table_util.deepcopy_table(EMPTY_STATE))
 end
 
 local on_exit_callback = function(bufnr)
@@ -116,7 +119,7 @@ M.test_result_handler = function(bufnr, cmd)
         vim.log.levels.INFO
     )
 
-    local init_state = utils.deepcopy_table(EMPTY_STATE)
+    local init_state = table_util.deepcopy_table(EMPTY_STATE)
     init_state["bufnr"] = bufnr
     update_state(bufnr, init_state)
 
@@ -178,7 +181,7 @@ end
 
 M.command = function(bufnr)
     local path = vim.fn.expand("#" .. bufnr .. ":f")
-    return utils.inject_file_to_test_command(
+    return format.inject_file_to_test_command(
         config.get_config().ruby.test_cmd,
         path
     ) .. " --format  json --no-fail-fast"

@@ -1,4 +1,4 @@
-local utils = require("continuous-testing.utils")
+local table_util = require("continuous-testing.utils.table")
 local M = {}
 
 local config = {}
@@ -22,10 +22,10 @@ M.set_user_specific_config = function(user_config)
 end
 
 M.get_config = function()
-    local merged_config = utils.deepcopy_table(config.framework_setup)
+    local merged_config = table_util.deepcopy_table(config.framework_setup)
 
     local project_framework_config =
-        utils.deepcopy_table(config.project_override[vim.fn.getcwd()])
+        table_util.deepcopy_table(config.project_override[vim.fn.getcwd()])
 
     if project_framework_config ~= nil then
         for k, v in pairs(project_framework_config) do

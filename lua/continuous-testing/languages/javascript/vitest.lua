@@ -1,7 +1,11 @@
 -- namespace for diagnostics
-local notify = require("continuous-testing.notify")
+local notify = require("continuous-testing.utils.notify")
 local config = require("continuous-testing.config")
-local utils = require("continuous-testing.utils")
+
+local table_util = require("continuous-testing.utils.table")
+local file_util = require("continuous-testing.utils.file")
+local format = require("continuous-testing.utils.format")
+
 local state = require("continuous-testing.state").get_state
 local update_state = require("continuous-testing.state").update_state
 local ns = vim.api.nvim_create_namespace("ContinuousVitestTesting")
@@ -52,7 +56,7 @@ M.clear_test_results = function(bufnr)
     vim.api.nvim_buf_clear_namespace(bufnr, ns, 0, -1)
     vim.fn.sign_unplace("continuous_tests", { buffer = bufnr })
 
-    update_state(bufnr, utils.deepcopy_table(EMPTY_STATE))
+    update_state(bufnr, table_util.deepcopy_table(EMPTY_STATE))
 end
 
 local get_root = function(bufnr)
@@ -187,7 +191,7 @@ M.testing_dialog_message = function(--[[optional]]bufnr)
 end
 
 M.test_result_handler = function(bufnr, cmd)
-    local init_state = utils.deepcopy_table(EMPTY_STATE)
+    local init_state = table_util.deepcopy_table(EMPTY_STATE)
     init_state["bufnr"] = bufnr
     update_state(bufnr, init_state)
 
@@ -198,11 +202,11 @@ M.test_result_handler = function(bufnr, cmd)
 
         M.clear_test_results(bufnr)
 
-        local cwd = utils.find_package_json_ancestor(
+        local cwd = file_util.find_package_json_ancestor(
             vim.fn.expand("#" .. bufnr .. ":p")
         )
 
-        local relative_cwd = utils.find_package_json_ancestor(
+        local relative_cwd = file_util.find_package_json_ancestor(
             vim.fn.expand("#" .. bufnr .. ":f")
         )
 
@@ -223,9 +227,10 @@ M.command = function(bufnr)
     local js_config = config.get_config().javascript
 
     -- search for rootfolder
-    local root_folder = utils.find_first_ancestor(path, js_config.root_pattern)
+    local root_folder =
+        file_util.find_first_ancestor(path, js_config.root_pattern)
 
-    return utils.inject_file_to_test_command(js_config.test_cmd, path)
+    return format.inject_file_to_test_command(js_config.test_cmd, path)
         .. " --outputFile="
         .. output_file
         .. " --root="

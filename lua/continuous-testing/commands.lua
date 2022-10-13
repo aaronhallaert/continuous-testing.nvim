@@ -1,7 +1,6 @@
 local config_helper = require("continuous-testing.config")
-local dialog = require("continuous-testing.dialog")
-local notify = require("continuous-testing.notify")
-local utils = require("continuous-testing.utils")
+local dialog = require("continuous-testing.utils.dialog")
+local notify = require("continuous-testing.utils.notify")
 local state = require("continuous-testing.state")
 
 local ATTACHED_TESTS = "AttachedContinuousTests"
