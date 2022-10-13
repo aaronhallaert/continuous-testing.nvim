@@ -1,6 +1,7 @@
 -- namespace for diagnostics
 local ns = vim.api.nvim_create_namespace("ContinuousRubyTesting")
 local utils = require("continuous-testing.utils")
+local config = require("continuous-testing.config")
 local state = require("continuous-testing.state").get_state
 local notify = require("continuous-testing.notify")
 local update_state = require("continuous-testing.state").update_state
@@ -173,6 +174,14 @@ M.test_result_handler = function(bufnr, cmd)
 
         state(bufnr)["job"] = job_id
     end
+end
+
+M.command = function(bufnr)
+    local path = vim.fn.expand("#" .. bufnr .. ":f")
+    return utils.inject_file_to_test_command(
+        config.get_config().ruby.test_cmd,
+        path
+    ) .. " --format  json --no-fail-fast"
 end
 
 return M

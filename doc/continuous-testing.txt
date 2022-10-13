@@ -83,5 +83,25 @@ State table specifications:
     diagnostics = {} 
 }
 
+*continuous-testing.typescript.vitest*
 
+State table specifications:
+{
+    numTotalTests = ...,
+    testResults = {
+        {
+            assertionResults = {
+                {
+                    ancestorTitles = {},
+                    fullName = ...,
+                    status = ...,
+                    title = ...,
+                    duration = ...,
+                    failureMessages = {},
+                },
+            },
+        },
+    },
+    diagnostics = {}
+}
 vim:tw=78:ts=8:ft=help:norl:

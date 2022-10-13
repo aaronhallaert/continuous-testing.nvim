@@ -37,6 +37,9 @@ M.get_config = function()
         merged_config[k] = v
     end
 
+    merged_config["framework_setup"] = nil
+    merged_config["project_override"] = nil
+
     return merged_config
 end
 

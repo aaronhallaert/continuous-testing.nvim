@@ -85,7 +85,7 @@ local start_continuous_testing = function()
 
     attach_on_save_autocmd(
         bufnr,
-        utils.inject_file_to_test_command(config.ruby.test_cmd, filename),
+        testing_module.command(bufnr),
         filetype_pattern
     )
 

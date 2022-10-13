@@ -3,7 +3,7 @@ local notify = require("continuous-testing.notify")
 
 local M = {}
 
-local FILE_TYPES = { rb = "ruby" }
+local FILE_TYPES = { rb = "ruby", ts = "javascript", js = "javascript" }
 
 local resolve_testing_module = function(language, test_tool)
     return require(
