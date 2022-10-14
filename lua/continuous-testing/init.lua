@@ -1,10 +1,29 @@
 local commands = require("continuous-testing.commands")
 
-vim.fn.sign_define("test_success", { text = "" })
-vim.fn.sign_define("test_failure", { text = "" })
-vim.fn.sign_define("test_skipped", { text = "" })
+vim.cmd([[
+  hi default ContinuousTestingPassed ctermfg=Green guifg=#96F291
+  hi default ContinuousTestingFailed ctermfg=Red guifg=#F70067
+  hi default ContinuousTestingRunning ctermfg=Yellow guifg=#FFEC63
+  hi default ContinuousTestingSkipped ctermfg=Cyan guifg=#00f1f5
+]])
+
+vim.fn.sign_define(
+    "test_success",
+    { text = "", texthl = "ContinuousTestingPassed" }
+)
+vim.fn.sign_define(
+    "test_failure",
+    { text = "", texthl = "ContinuousTestingFailed" }
+)
+vim.fn.sign_define(
+    "test_skipped",
+    { text = "", texthl = "ContinuousTestingSkipped" }
+)
+vim.fn.sign_define(
+    "test_running",
+    { text = "", texthl = "ContinuousTestingRunning" }
+)
 vim.fn.sign_define("test_other", { text = "" })
-vim.fn.sign_define("test_running", { text = "" })
 
 local M = {}
 
