@@ -18,7 +18,7 @@ local ts_query_tests = vim.treesitter.parse_query(
     "ruby",
     [[
         (call
-        method: (identifier) @id (#eq? @id "it")
+        method: (identifier) @id (#match? @id "^(it|xit)$")
         )
     ]]
 )

@@ -9,21 +9,21 @@ vim.cmd([[
 
 vim.fn.sign_define(
     "test_success",
-    { text = "", texthl = "ContinuousTestingPassed" }
+    { text = "", texthl = "ContinuousTestingPassed" }
 )
 vim.fn.sign_define(
     "test_failure",
-    { text = "", texthl = "ContinuousTestingFailed" }
+    { text = "", texthl = "ContinuousTestingFailed" }
 )
 vim.fn.sign_define(
     "test_skipped",
-    { text = "", texthl = "ContinuousTestingSkipped" }
+    { text = "嶺", texthl = "ContinuousTestingSkipped" }
 )
 vim.fn.sign_define(
     "test_running",
-    { text = "", texthl = "ContinuousTestingRunning" }
+    { text = "累", texthl = "ContinuousTestingRunning" }
 )
-vim.fn.sign_define("test_other", { text = "" })
+vim.fn.sign_define("test_other", { text = "" })
 
 local M = {}
 
