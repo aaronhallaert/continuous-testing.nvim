@@ -8,6 +8,7 @@ local notify = require("continuous-testing.utils.notify")
 
 -- implementation helper
 local common = require("continuous-testing.languages.common")
+local tmp_output = ""
 
 local M = {}
 
@@ -29,7 +30,13 @@ local on_exit_callback = function(bufnr)
         if next(state(bufnr).tests) == nil and exit_code ~= 143 then
             notify({
                 "No test results for " .. file_util.file_name(bufnr),
+                "See `:messages` for more info",
             }, vim.log.levels.ERROR)
+
+            common.clear_test_results(bufnr)
+            print(">> " .. M.command(bufnr))
+            error(tmp_output, vim.log.levels.ERROR)
+            tmp_output = ""
         end
 
         for _, test in pairs(state(bufnr).tests) do
@@ -129,7 +136,8 @@ M.test_result_handler = function(bufnr, cmd)
             end
 
             for _, line in ipairs(data) do
-                if string.find(line, "{") then
+                tmp_output = tmp_output .. "\n" .. line
+                if string.find(line, "{") == 1 then
                     local decoded = vim.json.decode(line)
 
                     state(bufnr).version = decoded.version
