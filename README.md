@@ -74,6 +74,7 @@ Multiple test files can be attached to the continuous testing plugin.
 
 ## TODO
 
+- [ ] Migrate autocmd filetype triggers to config
 - [x] Create default test command for a language
 - [x] Attach tests based on filetype
 - [x] Ability to override test command based on project (folder)
