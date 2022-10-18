@@ -14,4 +14,4 @@ jobs:
                   sudo apt-get install luarocks
                   sudo luarocks install luacheck
             - name: Lint
-              run: luacheck lua/ --globals vim
+              run: luacheck lua/continuous-testing --globals vim
