@@ -64,6 +64,10 @@ local attach_on_save_autocmd = function(bufnr, cmd, pattern)
         pattern = pattern,
         callback = testing_module.test_result_handler(bufnr, cmd),
     })
+
+    vim.api.nvim_create_autocmd("BufDelete", {
+        callback = stop_continuous_testing_cmd(bufnr),
+    })
 end
 
 local attach_test = function()
