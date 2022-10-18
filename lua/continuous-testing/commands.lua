@@ -1,4 +1,5 @@
 local dialog = require("continuous-testing.utils.dialog")
+local file_util = require("continuous-testing.utils.file")
 local notify = require("continuous-testing.utils.notify")
 local state = require("continuous-testing.state")
 local common = require("continuous-testing.languages.common")
@@ -21,6 +22,7 @@ local group = vim.api.nvim_create_augroup(CONTINUOUS_TESTING, { clear = true })
 
 local autocmd = nil
 local testing_module = nil
+local config = nil
 
 -- Stop continuous testing for the current test file
 -- @param bufnr The bufnr of the test file
@@ -59,15 +61,24 @@ local attach_on_save_autocmd = function(bufnr, cmd, pattern)
     state.attach(bufnr)
     common.clear_test_results(bufnr)
 
+    local test_result_handler = testing_module.test_result_handler(bufnr, cmd)
+
     autocmd = vim.api.nvim_create_autocmd("BufWritePost", {
         group = group,
         pattern = pattern,
-        callback = testing_module.test_result_handler(bufnr, cmd),
+        callback = test_result_handler,
     })
 
+    notify({ "Added " .. file_util.file_name(bufnr) }, vim.log.levels.INFO)
+
     vim.api.nvim_create_autocmd("BufDelete", {
+        group = group,
         callback = stop_continuous_testing_cmd(bufnr),
     })
+
+    if config.run_tests_on_setup then
+        test_result_handler()
+    end
 end
 
 local attach_test = function()
@@ -116,6 +127,8 @@ local attach_test = function()
 end
 
 M.setup = function()
+    config = require("continuous-testing.config").get_config()
+
     vim.api.nvim_create_user_command(CONTINUOUS_TESTING, attach_test, {})
 
     vim.api.nvim_create_user_command(
