@@ -5,6 +5,7 @@ local config = {}
 
 local DEFAULT_CONFIG = {
     notify = false,
+    run_tests_on_setup = false,
 }
 
 local set_default_values = function()

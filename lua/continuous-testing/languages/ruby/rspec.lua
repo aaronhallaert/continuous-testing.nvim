@@ -98,8 +98,6 @@ M.testing_dialog_message = function(bufnr, line_position)
 end
 
 M.test_result_handler = function(bufnr, cmd)
-    notify({ "Adding " .. file_util.file_name(bufnr) }, vim.log.levels.INFO)
-
     return function()
         if state(bufnr)["job"] ~= nil then
             vim.fn.jobstop(state(bufnr)["job"])

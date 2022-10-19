@@ -32,6 +32,7 @@ end)
 -- %file will be replace with the test file
 require("continuous-testing").setup {
     notify = true, -- The default is false
+    run_tests_on_setup = false, -- The default is true
     framework_setup = {
         ruby = {
             test_tool = "rspec",
