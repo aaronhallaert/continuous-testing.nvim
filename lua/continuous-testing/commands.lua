@@ -73,6 +73,7 @@ local attach_on_save_autocmd = function(bufnr, cmd, pattern)
 
     vim.api.nvim_create_autocmd("BufDelete", {
         group = group,
+        buffer = bufnr,
         callback = stop_continuous_testing_cmd(bufnr),
     })
 
