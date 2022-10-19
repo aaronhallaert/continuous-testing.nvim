@@ -11,10 +11,10 @@ local STOP_CONTINUOUS_TESTING = "StopContinuousTesting"
 
 local FILE_TYPE_PATTERNS = {
     rb = "*.rb",
-    js = { ".js", ".jsx", ".ts", ".tsx" },
-    jsx = { ".js", ".jsx", ".ts", ".tsx" },
-    ts = { ".js", ".jsx", ".ts", ".tsx" },
-    tsx = { ".js", ".jsx", ".ts", ".tsx" },
+    js = { "*.js", "*.jsx", "*.ts", "*.tsx" },
+    jsx = { "*.js", "*.jsx", "*.ts", "*.tsx" },
+    ts = { "*.js", "*.jsx", "*.ts", "*.tsx" },
+    tsx = { "*.js", "*.jsx", "*.ts", "*.tsx" },
 }
 local M = {}
 
@@ -89,12 +89,11 @@ local attach_test = function()
         return
     end
 
-    local filetype = vim.fn.expand("%:e")
-    local filetype_pattern = "*." .. filetype
+    local filetype_extension = vim.fn.expand("%:e")
 
     testing_module =
         require("continuous-testing.languages").resolve_testing_module_by_file_type(
-            filetype
+            filetype_extension
         )
 
     if testing_module == nil then
@@ -106,7 +105,7 @@ local attach_test = function()
     attach_on_save_autocmd(
         bufnr,
         testing_module.command(bufnr),
-        FILE_TYPE_PATTERNS[filetype_pattern]
+        FILE_TYPE_PATTERNS[filetype_extension]
     )
 
     -- Create a user command to stop the continuous testing on the test file
