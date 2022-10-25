@@ -1,6 +1,27 @@
 local file_util = require("continuous-testing.utils.file")
 
--- {[bufnr] : { ...state... }}
+-- {[bufnr] : { state }}
+--   required in {state}
+--      key: `tests`
+--        value: table[line_number] =
+--            { status: "passed | failed | pending", ... }
+--      key: `diagnostics`
+--        value: table =
+--            { bufnr = bufnr,
+--            lnum = line - 1,
+--            col = 0,
+--            severity = severity,
+--            source = "ContinuousTesting",
+--            message = message,
+--            user_data = {} }
+--      key: `summary_line`
+--        value: string
+--      key: `summary_log_level`
+--        value: vim.log.levels.{}
+--      key: `telescope_status`
+--        value: 🚫 | ✅
+--      key: `job`
+--        value: jobid
 local global_test_state = {}
 
 local M = {}
