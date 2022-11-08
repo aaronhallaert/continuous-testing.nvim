@@ -42,6 +42,7 @@ test_module.command({bufnr})                                    *continuous-test
 
 test_module.test_result_handler({bufnr}, {cmd})                *continuous-testing.test_module.test_result_handler()*
     Returns a function which will run (a test job) every time files are changed.
+    The returned function should return the job_id on its turn.
     This is the main autocommand callback.
     In general, it should handle the following things:
       - Run the test of the bufnr.
@@ -54,7 +55,7 @@ test_module.test_result_handler({bufnr}, {cmd})                *continuous-testi
       {cmd}    (string) A command to execute the test with a placeholder `%file`.
 
     Return:
-      Callback function which runs on every autocmd
+      Callback function with a return type of number representing a job_id, which runs on every autocmd
 
 
 test_module.testing_dialog_message({bufnr}, {line_position})    *continuous-testing.test_module.testing_dialog_message()*
@@ -64,6 +65,13 @@ test_module.testing_dialog_message({bufnr}, {line_position})    *continuous-test
     Parameters: 
       {bufnr}          (number) The bufnr of the test file.
       {line_position}  (number) The line number of the failing test.
+
+test_module.place_start_signs({bufnr})                          *continuous-testing.test_module.start_signs()*
+    Places start signs (by making use of `common.place_start_sign`) in the
+    test buffer. For example, determine lines of tests with treesitter.
+
+    Parameters: 
+      {bufnr}          (number) The bufnr of the test file.
 
 
 *continuous-testing.ruby.rspec*
@@ -91,7 +99,7 @@ State table specifications:
     diagnostics = {} 
 }
 
-*continuous-testing.typescript.vitest*
+*continuous-testing.javascript.vitest*
 
 State table specifications:
 {
