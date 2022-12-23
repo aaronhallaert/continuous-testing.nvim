@@ -37,8 +37,18 @@ M.get_config = function()
         table_util.merge_table(framework_config, general_framework_config)
     end
 
+    -- determine the key of the project
+    local key = "unknown"
+    local current_dir = vim.fn.getcwd()
+    for path, _ in pairs(config.project_override) do
+        if string.find(current_dir, path) then
+            key = path
+            break
+        end
+    end
+
     local project_framework_config =
-        table_util.deepcopy_table(config.project_override[vim.fn.getcwd()])
+        table_util.deepcopy_table(config.project_override[key])
     if project_framework_config ~= nil then
         table_util.merge_table(framework_config, project_framework_config)
     end
