@@ -125,7 +125,6 @@ M.test_result_handler = function(bufnr, cmd)
                 }, vim.log.levels.ERROR)
             end
 
-            print(vim.inspect(test_state))
             for line_number, test in pairs(test_state.tests) do
                 common.place_result_sign(bufnr, line_number, test.status)
                 common.add_diagnostics_to_state(

@@ -4,7 +4,10 @@ local file_util = require("continuous-testing.utils.file")
 --   required in {state}
 --      key: `tests`
 --        value: table[line_number] =
---            { status: "passed | failed | pending", ... }
+--            {
+--            status: "passed | failed | pending",
+--            ... (whatever you want)
+--            }
 --      key: `diagnostics`
 --        value: table =
 --            { bufnr = bufnr,

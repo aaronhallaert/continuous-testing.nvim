@@ -22,6 +22,21 @@ M.set_user_specific_config = function(user_config)
     set_default_values()
 end
 
+-- config structure
+--
+-- notify = $boolean$,
+-- run_tests_on_setup = $boolean$,
+-- $filetype$= {
+--     test_tool = $"rspec"|"vitest"$,
+--     test_cmd = command where %file will be replaced by testfile,
+--     root_pattern = $path$
+-- },
+--
+-- TODO: Add the patterns to run on save
+M.check_config = function(_config)
+    -- TODO: implement
+end
+
 M.get_config = function()
     local result = {}
     -- start with default config
@@ -41,6 +56,8 @@ M.get_config = function()
     local key = "unknown"
     local current_dir = vim.fn.getcwd()
     for path, _ in pairs(config.project_override) do
+        -- Paths can contain lua magic character '-'
+        -- String find does not work with this hyphen, therefore they are subbed
         if
             string.find(
                 string.gsub(current_dir, "%-", ""),
