@@ -21,6 +21,11 @@ local sign_id_for_status = function(test_result)
     return sign_name
 end
 
+-- Add result sign for a test in a file
+--
+-- @param bufnr Buffer number
+-- @param line Line number of the test
+-- @param status One of TEST_RESULTS["passed", "failed" ,"pending"]
 M.place_result_sign = function(bufnr, line, status)
     vim.fn.sign_unplace("", { buffer = bufnr, id = line })
 
@@ -33,6 +38,10 @@ M.place_result_sign = function(bufnr, line, status)
     )
 end
 
+-- Add start sign to a test
+--
+-- @param bufnr Buffer number
+-- @param line Line number of test
 M.place_start_sign = function(bufnr, line)
     vim.fn.sign_place(
         line,
@@ -49,6 +58,13 @@ M.publish_diagnostics = function(bufnr)
     vim.diagnostic.set(M.ns, bufnr, state(bufnr).diagnostics, {})
 end
 
+-- Add test result as diagnostics
+-- Eventually, after all diagnostics are added, call the `publish_diagnostics` method!
+--
+-- @param bufnr Buffer number
+-- @param line Line number of test
+-- @param status One of `TEST_RESULTS`["passed", "failed", "pending"]
+-- @param source One of the supported test frameworks ("rspec", "vitest" ...)
 M.add_diagnostics_to_state = function(bufnr, line, status, source)
     local test_state = state(bufnr)
     local severity = vim.diagnostic.severity.ERROR
@@ -75,6 +91,10 @@ M.add_diagnostics_to_state = function(bufnr, line, status, source)
     end
 end
 
+-- Stop running test jobs
+-- Clean up diagnostics, signs and continuous-testing state
+--
+-- @param bufnr
 M.cleanup_previous_test_run = function(bufnr)
     if state(bufnr)["job"] ~= nil then
         vim.fn.jobstop(state(bufnr)["job"])

@@ -17,6 +17,7 @@ local FILE_TYPE_PATTERNS = {
     ts = { "*.js", "*.jsx", "*.ts", "*.tsx" },
     tsx = { "*.js", "*.jsx", "*.ts", "*.tsx" },
 }
+
 local M = {}
 
 local group = vim.api.nvim_create_augroup(CONTINUOUS_TESTING, { clear = true })
@@ -104,7 +105,7 @@ local attach_test = function()
         )
 
     if testing_module == nil then
-        notify("No testing module found", vim.log.levels.WARN)
+        notify("No testing module found for this filetype", vim.log.levels.WARN)
         return
     end
 

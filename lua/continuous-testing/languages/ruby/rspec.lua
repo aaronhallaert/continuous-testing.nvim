@@ -12,6 +12,27 @@ local tmp_output = ""
 
 local M = {}
 
+local generate_tests_state = function(bufnr, json_data)
+    state(bufnr).version = json_data.version
+    state(bufnr).seed = json_data.seed
+
+    for _, test in pairs(json_data.examples) do
+        state(bufnr).tests[test.line_number] = test
+    end
+
+    local log_level
+    if json_data.summary.failure_count > 0 then
+        log_level = vim.log.levels.ERROR
+        state(bufnr).telescope_status = "🚫"
+    else
+        log_level = vim.log.levels.INFO
+        state(bufnr).telescope_status = "✅"
+    end
+
+    state(bufnr).summary_line = json_data.summary_line
+    state(bufnr).summary_log_level = log_level
+end
+
 M.place_start_signs = function(bufnr)
     local ts_query_tests = vim.treesitter.parse_query(
         "ruby",
@@ -32,27 +53,6 @@ M.place_start_signs = function(bufnr)
             common.place_start_sign(bufnr, range[1])
         end
     end
-end
-
-local generate_tests_state = function(bufnr, json_data)
-    state(bufnr).version = json_data.version
-    state(bufnr).seed = json_data.seed
-
-    for _, test in pairs(json_data.examples) do
-        state(bufnr).tests[test.line_number] = test
-    end
-
-    local log_level
-    if json_data.summary.failure_count > 0 then
-        log_level = vim.log.levels.ERROR
-        state(bufnr).telescope_status = "🚫"
-    else
-        log_level = vim.log.levels.INFO
-        state(bufnr).telescope_status = "✅"
-    end
-
-    state(bufnr).summary_line = json_data.summary_line
-    state(bufnr).summary_log_level = log_level
 end
 
 M.testing_dialog_message = function(bufnr, line_position)

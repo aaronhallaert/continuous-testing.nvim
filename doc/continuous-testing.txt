@@ -2,8 +2,8 @@
                                                           *continuous-testing*
 
 
-This plugin attaches test files to autocommands. These tests will be executed
-on every file change of a certain file type depending on the test framework.
+This plugin attaches attaches autocommands to test files. These tests are 
+executed on every file change of a certain file type depending on the test framework.
 Run tests async on save, add to diagnostics, get notified on failures.
 
 
@@ -34,21 +34,29 @@ When adding support for a test framework, place the implemented framework under 
 
 This file should contain the following functions:
 
-test_module.command({bufnr})                                    *continuous-testing.test_module.command()*
-    Returns the test command which should be executed.
+test_module.command( {bufnr} )                                    *continuous-testing.test_module.command()*
+    Returns the test command (string) which is executed on save.
 
     Parameters: 
       {bufnr}  (number) The bufnr of the test file.
 
-test_module.test_result_handler({bufnr}, {cmd})                *continuous-testing.test_module.test_result_handler()*
-    Returns a function which will run (a test job) every time files are changed.
+    Return:
+      Test command as string
+
+test_module.test_result_handler( {bufnr}, {cmd} )                *continuous-testing.test_module.test_result_handler()*
+    Returns a function which runs (a test job) every time files are changed.
     The returned function should return the job_id on its turn.
     This is the main autocommand callback.
     In general, it should handle the following things:
       - Run the test of the bufnr.
-      - Parse the output.
-      - Set diagnostics based on test results.
-      - Set vim signs based on test results.
+      - Parse the output and set the state for the test (`state(bufnr)`)
+        - For each test
+            - Initialize and set diagnostics. (`common.add_diagnostics_to_state`) 
+            - Place result sign.
+        - Publish the diagnostics which were set in the state with `common.publish_diagnostics`.
+        - Set `telescope_status` based on test results.
+        - Set summary after all tests ran. (`summary_line` and
+          `summary_log_level`).
 
     Parameters: 
       {bufnr}  (number) The bufnr of the test file.
@@ -58,7 +66,7 @@ test_module.test_result_handler({bufnr}, {cmd})                *continuous-testi
       Callback function with a return type of number representing a job_id, which runs on every autocmd
 
 
-test_module.testing_dialog_message({bufnr}, {line_position})    *continuous-testing.test_module.testing_dialog_message()*
+test_module.testing_dialog_message( {bufnr}, {line_position} )    *continuous-testing.test_module.testing_dialog_message()*
     Returns the failure message including a backtrace on this position.
     Ideally, this can be retrieved from the global state.
 
@@ -66,7 +74,7 @@ test_module.testing_dialog_message({bufnr}, {line_position})    *continuous-test
       {bufnr}          (number) The bufnr of the test file.
       {line_position}  (number) The line number of the failing test.
 
-test_module.place_start_signs({bufnr})                          *continuous-testing.test_module.start_signs()*
+test_module.place_start_signs( {bufnr} )                          *continuous-testing.test_module.start_signs()*
     Places start signs (by making use of `common.place_start_sign`) in the
     test buffer. For example, determine lines of tests with treesitter.
 
@@ -96,7 +104,10 @@ State table specifications:
         }
     },
     telescope_status = {},
-    diagnostics = {} 
+    diagnostics = {},
+    summary_line = ...,
+    summary_log_level = vim.log.levels.{},
+    job = job_id
 }
 
 *continuous-testing.javascript.vitest*
@@ -106,9 +117,9 @@ State table specifications:
     numTotalTests = ...,
     tests = {
         [line_number]: {
+                status = ..., // "passed", "failed", "pending"
                 ancestorTitles = {},
                 fullName = ...,
-                status = ...,
                 title = ...,
                 duration = ...,
                 failureMessages = {},
@@ -116,7 +127,10 @@ State table specifications:
         },
     },
     telescope_status = {},
-    diagnostics = {}
+    diagnostics = {},
+    summary_line = ...,
+    summary_log_level = vim.log.levels.{},
+    job = job_id
 }
 
 vim:tw=78:ts=8:ft=help:norl:

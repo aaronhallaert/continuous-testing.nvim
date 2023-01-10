@@ -8,8 +8,8 @@ Inspired by [teejdv - Integrated Test Results](https://www.youtube.com/watch?v=c
 
 ### Screenshots
 
+![Test Setup](./media/test_add.png)
 ![Test Failure](./media/test_failure_screen.png)
-![Test Failure Dialog](./media/test_failure_dialog_screen.png)
 ![Test Success](./media/test_success_screen.png)
 
 ## Installation
@@ -36,7 +36,7 @@ require("continuous-testing").setup {
     framework_setup = {
         ruby = {
             test_tool = "rspec",
-            test_cmd = "bundle exec rspec %file --format json --no-fail-fast",
+            test_cmd = "bundle exec rspec %file",
         }
         javascript = {
             test_tool = "vitest", -- cwd of the executing test will be at package.json
@@ -48,7 +48,7 @@ require("continuous-testing").setup {
         ["/Users/name/Developer/ruby-project"] = {
             ruby = {
                 test_tool = "rspec",
-                test_cmd = "docker exec -it name -- bundle exec rspec %file --format json --no-fail-fast",
+                test_cmd = "docker exec -it name -- bundle exec rspec %file",
             },
         },
     },
