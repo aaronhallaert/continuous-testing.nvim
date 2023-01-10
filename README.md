@@ -57,9 +57,10 @@ require("continuous-testing").setup {
 
 ### Supported Test Frameworks
 
-| Language | Frameworks | Required Options |
-| -------- | ---------- | ---------------- |
-| Ruby     | rspec      | `--format json`  |
+| Language    | Frameworks |
+| --------    | ---------- |
+| Ruby        | rspec      |
+| JS, TS ...  | vitest     |
 
 ## Usage
 
