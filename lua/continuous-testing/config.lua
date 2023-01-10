@@ -41,7 +41,12 @@ M.get_config = function()
     local key = "unknown"
     local current_dir = vim.fn.getcwd()
     for path, _ in pairs(config.project_override) do
-        if string.find(current_dir, path) then
+        if
+            string.find(
+                string.gsub(current_dir, "%-", ""),
+                string.gsub(path, "%-", "")
+            )
+        then
             key = path
             break
         end
