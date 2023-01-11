@@ -68,4 +68,23 @@ M.attached_tests = function()
     return files
 end
 
+M.attached_tests_with_lines = function()
+    local files = {}
+    for k, _ in pairs(global_test_state) do
+        print("Key: " .. k)
+        print(vim.inspect(M.get_state(k)))
+        for line, instance_state in pairs(M.get_state(k).tests) do
+            print("Line: " .. line)
+            local file = file_util.relative_path(k)
+                .. ":"
+                .. line
+                .. " "
+                .. instance_state.title
+            table.insert(files, file)
+        end
+    end
+
+    return files
+end
+
 return M
