@@ -38,7 +38,8 @@ M.place_start_signs = function(bufnr)
         "ruby",
         [[
         (call
-        method: (identifier) @id (#match? @id "^(it|xit)$")
+            method: (identifier) @id (#match? @id "^(it|xit)$")
+            arguments: (argument_list (string (string_content) @title))
         )
     ]]
     )
@@ -51,6 +52,12 @@ M.place_start_signs = function(bufnr)
             -- {start row, start col, end row, end col}
             local range = { node:range() }
             common.place_start_sign(bufnr, range[1])
+        elseif name == "title" then
+            local title = vim.treesitter.query.get_node_text(node, bufnr)
+            local range = { node:range() }
+            state(bufnr).tests[range[1] + 1] =
+                { status = "pending", title = title }
+            state(bufnr).phase = "pre_test"
         end
     end
 end
@@ -101,6 +108,7 @@ M.test_result_handler = function(bufnr, cmd)
         for _, line in ipairs(data) do
             tmp_output = tmp_output .. "\n" .. line
             if string.find(line, "{") == 1 then
+                state(bufnr).phase = "parse_test"
                 local json_data = vim.json.decode(line)
                 generate_tests_state(bufnr, json_data)
             end
@@ -111,7 +119,19 @@ M.test_result_handler = function(bufnr, cmd)
         return function(_, exit_code, _)
             -- TODO: this is still partly common code, if the state is properly set up, this can also be extracted
             -- exit_code 143 means SIGTERM
-            if next(state(bufnr).tests) == nil and exit_code ~= 143 then
+            if state(bufnr).phase == "test" and exit_code == 1 then
+                notify({
+                    "Breakpoint detected",
+                }, vim.log.levels.WARN)
+                require("continuous-testing.telescope").open_attached_test_instances(
+                    config.get_config().ruby.test_cmd
+                )
+                common.cleanup_previous_test_run(bufnr)
+                return
+            elseif
+                (next(state(bufnr).tests) == nil and exit_code ~= 143)
+                or exit_code == 1
+            then
                 notify({
                     "No test results for " .. file_util.file_name(bufnr),
                     "See `:messages` for more info",
@@ -121,6 +141,7 @@ M.test_result_handler = function(bufnr, cmd)
                 print(">> " .. M.command(bufnr))
                 error(tmp_output, vim.log.levels.ERROR)
                 tmp_output = ""
+                return
             end
 
             local test_state = state(bufnr)
@@ -141,10 +162,12 @@ M.test_result_handler = function(bufnr, cmd)
             )
 
             common.publish_diagnostics(bufnr)
+            state(bufnr).phase = "post_test"
         end
     end
 
-    local job_id = vim.fn.jobstart(cmd, {
+    state(bufnr).phase = "test"
+    local job_id = vim.fn.jobstart("rubocop --only Lint/Debugger &&" .. cmd, {
         stdout_buffered = true,
         on_stdout = append_data,
         on_stderr = append_data,
