@@ -56,30 +56,29 @@ M.attach = function(bufnr)
     global_test_state[bufnr] = {}
 end
 
-M.attached_tests = function()
+M.attached_tests_telescope_status = function()
     local files = {}
     for k, _ in pairs(global_test_state) do
-        local file = file_util.relative_path(k)
-            .. " "
-            .. M.get_state(k).telescope_status
-        table.insert(files, file)
+        local entry = {
+            file_util.relative_path(k),
+            M.get_state(k).telescope_status,
+        }
+        table.insert(files, entry)
     end
 
     return files
 end
 
+-- @return table [{filename, line_number, test_description}]
 M.attached_tests_with_lines = function()
     local files = {}
     for k, _ in pairs(global_test_state) do
-        print("Key: " .. k)
-        print(vim.inspect(M.get_state(k)))
         for line, instance_state in pairs(M.get_state(k).tests) do
-            print("Line: " .. line)
-            local file = file_util.relative_path(k)
-                .. ":"
-                .. line
-                .. " "
-                .. instance_state.title
+            local file = {
+                file_util.relative_path(k),
+                line,
+                instance_state.title,
+            }
             table.insert(files, file)
         end
     end
