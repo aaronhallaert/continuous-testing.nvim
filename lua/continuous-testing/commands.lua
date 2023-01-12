@@ -55,7 +55,9 @@ local open_test_output_dialog_cmd = function(bufnr)
     end
 end
 
--- Run the test file (bufnr) whenever a file is saved with a certain pattern
+--
+-- Framework for test runners
+--
 -- @param bufnr Bufnr of test file
 -- @param cmd Test command to execute
 -- @param pattern Execute the autocmd on save for files with this pattern
@@ -65,7 +67,8 @@ local attach_on_save_autocmd = function(bufnr, cmd, pattern)
 
     local handle_test = function()
         common.cleanup_previous_test_run(bufnr)
-        testing_module.place_start_signs(bufnr)
+        testing_module.initialize_state(bufnr)
+
         local job_id = testing_module.test_result_handler(bufnr, cmd)
         get_state(bufnr)["job"] = job_id
     end
