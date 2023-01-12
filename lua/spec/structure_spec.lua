@@ -24,13 +24,15 @@ end
 
 local supported_modules = function()
     local t = {}
-    local dirs =
-        scan.scan_dir("./lua/continuous-testing/languages", { add_dirs = true })
+    local dirs = scan.scan_dir(
+        "./lua/continuous-testing/languages",
+        { depth = 1, add_dirs = true }
+    )
 
     for _, file in pairs(dirs) do
         if Path:new(file):is_dir() then
             local supported_language_paths =
-                scan.scan_dir(file, { depth = 2, add_dirs = true })
+                scan.scan_dir(file, { depth = 1, add_dirs = true })
 
             for _, lang in pairs(supported_language_paths) do
                 local lang_path = Path:new(lang)
@@ -79,10 +81,10 @@ describe("structure of supported language implementations ", function()
         end
     end)
 
-    it("checks if place_start_signs exists", function()
+    it("checks if initialize_state exists", function()
         for _, module in pairs(supported_modules()) do
             assert.not_equals(
-                require("continuous-testing.languages." .. module).place_start_signs,
+                require("continuous-testing.languages." .. module).initialize_state,
                 nil
             )
         end
