@@ -1,6 +1,6 @@
 local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
-local format = require("continuous-testing.utils.format")
+local file_util = require("continuous-testing.utils.file")
 
 local M = {}
 M.open_attached_tests = function()
@@ -33,7 +33,6 @@ M.open_attached_tests = function()
                     actions.close(prompt_bufnr)
                     local selection = action_state.get_selected_entry()
                     local file = selection[1]
-                    print("File: " .. file)
                     vim.cmd(":edit " .. file)
                 end)
                 return true
@@ -42,7 +41,7 @@ M.open_attached_tests = function()
         :find()
 end
 
-M.open_attached_test_instances = function(cmd)
+M.open_attached_test_instances = function()
     -- local previewers = require("telescope.previewers")
     local pickers = require("telescope.pickers")
     local sorters = require("telescope.sorters")
@@ -60,15 +59,16 @@ M.open_attached_test_instances = function(cmd)
                 entry_maker = function(entry)
                     return {
                         value = entry,
-                        display = entry[1]
+                        display = entry[2]
                             .. ":"
-                            .. entry[2]
+                            .. entry[3]
                             .. " "
-                            .. entry[3],
-                        ordinal = entry[3],
-                        lnum = entry[2],
-                        filename = entry[1],
-                        preview_title = entry[3],
+                            .. entry[4],
+                        ordinal = entry[4],
+                        lnum = entry[3],
+                        bufnr = entry[1],
+                        filename = entry[2],
+                        preview_title = entry[4],
                     }
                 end,
             }),
@@ -78,9 +78,20 @@ M.open_attached_test_instances = function(cmd)
                 map("i", "<CR>", function(prompt_bufnr)
                     actions.close(prompt_bufnr)
                     local selection = action_state.get_selected_entry()
-                    local file = format.split(selection.value, " ")[1]
-                    local formatted_cmd =
-                        format.inject_file_to_test_command(cmd, file)
+
+                    local filetype_extension =
+                        file_util.extension(selection.bufnr)
+
+                    local testing_module = require(
+                        "continuous-testing.languages"
+                    ).resolve_testing_module_by_file_type(
+                        filetype_extension
+                    )
+
+                    local formatted_cmd = testing_module.command(
+                        selection.bufnr,
+                        { formatting = false, lnum = selection.lnum }
+                    )
                     vim.cmd(":term " .. formatted_cmd)
                 end)
                 return true

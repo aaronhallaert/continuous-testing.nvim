@@ -6,6 +6,7 @@ local get_state = require("continuous-testing.state").get_state
 local common = require("continuous-testing.languages.common")
 
 local ATTACHED_TESTS = "AttachedContinuousTests"
+local RUN_ATTACHED_TESTS = "RunAttachedTest"
 local CONTINUOUS_TESTING = "ContinuousTesting"
 local CONTINUOUS_TESTING_DIALOG = "ContinuousTestingDialog"
 local STOP_CONTINUOUS_TESTING = "StopContinuousTesting"
@@ -144,6 +145,12 @@ M.setup = function()
     vim.api.nvim_create_user_command(
         ATTACHED_TESTS,
         require("continuous-testing.telescope").open_attached_tests,
+        {}
+    )
+
+    vim.api.nvim_create_user_command(
+        RUN_ATTACHED_TESTS,
+        require("continuous-testing.telescope").open_attached_test_instances,
         {}
     )
 end
