@@ -79,10 +79,10 @@ describe("structure of supported language implementations ", function()
         end
     end)
 
-    it("checks if place_start_signs exists", function()
+    it("checks if initialize_state exists", function()
         for _, module in pairs(supported_modules()) do
             assert.not_equals(
-                require("continuous-testing.languages." .. module).place_start_signs,
+                require("continuous-testing.languages." .. module).initialize_state,
                 nil
             )
         end

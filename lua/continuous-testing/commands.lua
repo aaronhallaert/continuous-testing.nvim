@@ -6,6 +6,7 @@ local get_state = require("continuous-testing.state").get_state
 local common = require("continuous-testing.languages.common")
 
 local ATTACHED_TESTS = "AttachedContinuousTests"
+local RUN_ATTACHED_TESTS = "RunAttachedTest"
 local CONTINUOUS_TESTING = "ContinuousTesting"
 local CONTINUOUS_TESTING_DIALOG = "ContinuousTestingDialog"
 local STOP_CONTINUOUS_TESTING = "StopContinuousTesting"
@@ -55,7 +56,9 @@ local open_test_output_dialog_cmd = function(bufnr)
     end
 end
 
--- Run the test file (bufnr) whenever a file is saved with a certain pattern
+--
+-- Framework for test runners
+--
 -- @param bufnr Bufnr of test file
 -- @param cmd Test command to execute
 -- @param pattern Execute the autocmd on save for files with this pattern
@@ -65,7 +68,8 @@ local attach_on_save_autocmd = function(bufnr, cmd, pattern)
 
     local handle_test = function()
         common.cleanup_previous_test_run(bufnr)
-        testing_module.place_start_signs(bufnr)
+        testing_module.initialize_state(bufnr)
+
         local job_id = testing_module.test_result_handler(bufnr, cmd)
         get_state(bufnr)["job"] = job_id
     end
@@ -141,6 +145,12 @@ M.setup = function()
     vim.api.nvim_create_user_command(
         ATTACHED_TESTS,
         require("continuous-testing.telescope").open_attached_tests,
+        {}
+    )
+
+    vim.api.nvim_create_user_command(
+        RUN_ATTACHED_TESTS,
+        require("continuous-testing.telescope").open_attached_test_instances,
         {}
     )
 end

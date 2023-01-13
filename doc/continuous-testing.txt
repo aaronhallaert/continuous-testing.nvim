@@ -74,9 +74,12 @@ test_module.testing_dialog_message( {bufnr}, {line_position} )    *continuous-te
       {bufnr}          (number) The bufnr of the test file.
       {line_position}  (number) The line number of the failing test.
 
-test_module.place_start_signs( {bufnr} )                          *continuous-testing.test_module.start_signs()*
-    Places start signs (by making use of `common.place_start_sign`) in the
-    test buffer. For example, determine lines of tests with treesitter.
+test_module.initialize_state( {bufnr} )                          *continuous-testing.test_module.start_signs()*
+    - Places start signs (by making use of `common.place_start_sign`) in the
+    test buffer. 
+    - Set some state values for each test line (in `state(bufnr).tests[line]`)
+
+    For example, determine lines of tests with treesitter.
 
     Parameters: 
       {bufnr}          (number) The bufnr of the test file.
