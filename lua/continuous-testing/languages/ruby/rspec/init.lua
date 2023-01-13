@@ -19,12 +19,23 @@ local test_rspec = require("continuous-testing.languages.ruby.rspec.test-rspec")
 
 local M = {}
 
-M.command = function(bufnr)
+M.command = function(bufnr, opts)
+    opts = opts or { formatting = true }
     local path = file_util.relative_path(bufnr)
-    return format.inject_file_to_test_command(
+
+    if opts.lnum ~= nil then
+        path = path .. ":" .. opts.lnum
+    end
+
+    local cmd = format.inject_file_to_test_command(
         config.get_config().ruby.test_cmd,
         path
-    ) .. " --format  json --no-fail-fast"
+    )
+    if opts.formatting then
+        return cmd .. " --format  json --no-fail-fast"
+    else
+        return cmd
+    end
 end
 
 M.initialize_state = function(bufnr)

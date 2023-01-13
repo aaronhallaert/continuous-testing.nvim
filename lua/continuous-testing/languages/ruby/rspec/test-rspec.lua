@@ -9,6 +9,7 @@ local state_rspec =
 
 local tmp_output = ""
 
+-- Parses stdout and scans for `{}` which includes the json test results
 local append_data = function(bufnr)
     return function(_, data)
         if not data then
@@ -18,7 +19,9 @@ local append_data = function(bufnr)
 
         for _, line in ipairs(data) do
             tmp_output = tmp_output .. "\n" .. line
-            if string.find(line, "{") == 1 then
+            if string.find(line, "rubocop ended") == 1 then
+                state(bufnr).phase = "test"
+            elseif string.find(line, "{") == 1 then
                 state(bufnr).phase = "parse_test"
                 local json_data = vim.json.decode(line)
                 state_rspec.generate_tests_state(bufnr, json_data)
@@ -27,29 +30,30 @@ local append_data = function(bufnr)
     end
 end
 
-local on_exit_callback = function(bufnr)
+local on_exit_callback = function(bufnr, command)
     return function(_, exit_code, _)
-        -- TODO: this is still partly common code, if the state is properly set up, this can also be extracted
-        -- exit_code 143 means SIGTERM
-        if state(bufnr).phase == "test" and exit_code == 1 then
+        if state(bufnr).phase == "pre_test" and exit_code == 1 then
             notify({
                 "Breakpoint detected",
             }, vim.log.levels.WARN)
-            require("continuous-testing.telescope").open_attached_test_instances(
-                config.get_config().ruby.test_cmd
-            )
-            common.cleanup_previous_test_run(bufnr)
+
+            common.cleanup_previous_test_run(bufnr, { clear_state = false })
+
             return
-        elseif next(state(bufnr).tests) == nil and exit_code ~= 143 then
+        elseif state(bufnr).phase == "test" and exit_code == 1 then
             notify({
                 "No test results for " .. file_util.file_name(bufnr),
                 "See `:messages` for more info",
             }, vim.log.levels.ERROR)
 
             common.cleanup_previous_test_run(bufnr)
-            print(">> " .. M.command(bufnr))
+            print(">> " .. command)
             error(tmp_output, vim.log.levels.ERROR)
             tmp_output = ""
+
+            return
+        elseif exit_code == 143 then
+            -- exit_code 143 means SIGTERM
             return
         end
 
@@ -78,13 +82,15 @@ end
 M = {}
 
 M.run_test_file = function(bufnr, cmd)
-    state(bufnr).phase = "test"
-    local job_id = vim.fn.jobstart("rubocop --only Lint/Debugger &&" .. cmd, {
-        stdout_buffered = true,
-        on_stdout = append_data(bufnr),
-        on_stderr = append_data(bufnr),
-        on_exit = on_exit_callback(bufnr),
-    })
+    local job_id = vim.fn.jobstart(
+        "rubocop --only Lint/Debugger && echo 'rubocop ended' &&" .. cmd,
+        {
+            stdout_buffered = true,
+            on_stdout = append_data(bufnr),
+            on_stderr = append_data(bufnr),
+            on_exit = on_exit_callback(bufnr, cmd),
+        }
+    )
 
     return job_id
 end
