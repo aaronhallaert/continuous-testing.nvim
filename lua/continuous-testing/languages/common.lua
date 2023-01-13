@@ -95,7 +95,9 @@ end
 -- Clean up diagnostics, signs and continuous-testing state
 --
 -- @param bufnr
-M.cleanup_previous_test_run = function(bufnr)
+M.cleanup_previous_test_run = function(bufnr, opts)
+    opts = opts or { clear_state = true }
+
     if state(bufnr)["job"] ~= nil then
         vim.fn.jobstop(state(bufnr)["job"])
     end
@@ -104,7 +106,12 @@ M.cleanup_previous_test_run = function(bufnr)
     vim.api.nvim_buf_clear_namespace(bufnr, M.ns, 0, -1)
     vim.fn.sign_unplace("continuous_tests", { buffer = bufnr })
 
-    update_state(bufnr, { diagnostics = {}, tests = {}, telescope_status = "" })
+    if opts.clear_state then
+        update_state(
+            bufnr,
+            { diagnostics = {}, tests = {}, telescope_status = "" }
+        )
+    end
 end
 
 return M

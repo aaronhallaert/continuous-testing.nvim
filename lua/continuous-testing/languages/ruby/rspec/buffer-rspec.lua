@@ -1,7 +1,7 @@
 local common = require("continuous-testing.languages.common")
 local format = require("continuous-testing.utils.format")
 
-M = {}
+local M = {}
 
 M.set_start_signs = function(bufnr)
     local ts_query_tests = vim.treesitter.parse_query(

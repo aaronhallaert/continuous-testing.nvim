@@ -1,7 +1,7 @@
 local format = require("continuous-testing.utils.format")
 local state = require("continuous-testing.state").get_state
 
-M = {}
+local M = {}
 
 M.generate_tests_state = function(bufnr, json_data)
     state(bufnr).version = json_data.version

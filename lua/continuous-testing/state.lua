@@ -75,6 +75,7 @@ M.attached_tests_with_lines = function()
     for k, _ in pairs(global_test_state) do
         for line, instance_state in pairs(M.get_state(k).tests) do
             local file = {
+                k,
                 file_util.relative_path(k),
                 line,
                 instance_state.title,
