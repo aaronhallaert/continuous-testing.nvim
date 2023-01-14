@@ -4,7 +4,7 @@ local validate = vim.validate
 local M = {}
 
 M.relative_path = function(bufnr)
-    return vim.fn.expand("#" .. bufnr .. ":f")
+    return vim.fn.expand("#" .. bufnr .. ":~:.")
 end
 
 M.file_name = function(bufnr)
