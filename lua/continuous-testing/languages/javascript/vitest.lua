@@ -14,6 +14,26 @@ local OUTPUT_FILE = "/tmp/vitest_test.json"
 
 local M = {}
 
+-- {
+--     numTotalTests = ...,                               // -- source Vitest
+--     test_results = {                                   // -- require ContinuousTesting
+--         [line_number]: {
+--                 status = "passed", "failed", "pending" // test result
+--                 ancestorTitles = {},
+--                 fullName = ...,
+--                 title = ...,
+--                 duration = ...,
+--                 failureMessages = {},
+--             },
+--         },
+--     },
+--     telescope_status = {},                             // -- required ContinuousTesting
+--     diagnostics = {},                                  // -- required ContinuousTesting
+--     summary_line = ...,                                // -- required ContinuousTesting
+--     summary_log_level = vim.log.levels.{},             // -- required ContinuousTesting
+--     job = job_id                                       // -- required ContinuousTesting
+-- }
+
 local ts_query_tests = vim.treesitter.parse_query(
     "javascript",
     [[

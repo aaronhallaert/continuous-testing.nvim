@@ -1,4 +1,5 @@
 # continuous-testing.nvim
+
 Run tests async on save, add to diagnostics, get notified on failures.
 
 Inspired by [teejdv - Integrated Test Results](https://www.youtube.com/watch?v=cf72gMBrsI0).
@@ -33,14 +34,12 @@ Inspired by [teejdv - Integrated Test Results](https://www.youtube.com/watch?v=c
 
 </details>
 
-
-
-
 ## ⚙️ Installation
 
 ### Plugin manager
 
 - Packer
+
 ```lua
 return require('packer').startup(function(use)
     use 'aaronhallaert/continuous-testing.nvim'
@@ -48,6 +47,7 @@ end)
 ```
 
 - Lazy.nvim
+
 ```lua
 {'aaronhallaert/continuous-testing.nvim'}
 ```
@@ -89,21 +89,23 @@ require("continuous-testing").setup {
 
 ### Supported Test Frameworks
 
-| Language    | Frameworks |
-| --------    | ---------- |
-| Ruby        | rspec      |
-| JS, TS ...  | vitest     |
+#### Rspec (Ruby)
+
+- Make sure rubocop is installed. This is used to check for breakpoints.
+
+#### Vitest (Javascript, Typescript ...)
 
 ## 🏋️‍♀️ Usage
 
 Multiple test files can be attached to the continuous testing plugin.
 
-| Command                 | Usage                                              | Behaviour                                     |
-| ----------------------- | -------------------------------------------------- | --------------------------------------------- |
-| ContinuousTesting       | When current buffer is a test file                 | Add current buffer to start tests on save     |
-| ContinuousTestingDialog | On line of failure                                 | Show output of failed test in floating window |
-| StopContinuousTesting   | Anywhere in vim when continuous testing is enabled | Stops the continuous testing                  |
-| AttachedContinuousTests | Anywhere in vim                                    | List the attached tests in a telescope window |
+| Command     | Usage                                              | Behaviour                                                                               |
+| ----------- | -------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| CTAttach    | When current buffer is a test file                 | Add current buffer to start tests on save                                               |
+| CTDialog    | On line of failure                                 | Show output of failed test in floating window                                           |
+| CTDetach    | Anywhere in vim when continuous testing is enabled | Stops the continuous testing                                                            |
+| CTOverview  | Anywhere in vim                                    | List the attached tests in a telescope window                                           |
+| CTSingleRun | Anywhere in vim                                    | List the attached test instances in a telescope window press enter to run in a terminal |
 
 ## 🛠 Developers
 
@@ -112,9 +114,3 @@ See vim-docs and inline documentation for more info.
 ### TODO
 
 - [ ] Migrate autocmd filetype triggers to config
-- [x] Create default test command for a language
-- [x] Attach tests based on filetype
-- [x] Ability to override test command based on project (folder)
-- [x] Add different languages (change to general command `ContinuousTesting` instead of `ContinuousRubyTesting`)
-- [x] Add branch protection to github project
-- [x] Add github actions: linters, tests
