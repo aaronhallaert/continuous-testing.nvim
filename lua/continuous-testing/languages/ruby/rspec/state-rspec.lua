@@ -36,6 +36,8 @@ M.generate_tests_state = function(bufnr, json_data)
     state(bufnr).seed = json_data.seed
 
     for _, test in pairs(json_data.examples) do
+        state(bufnr).test_results[test.line_number] = state(bufnr).test_results[test.line_number]
+            or {}
         table_utils.merge_table(
             state(bufnr).test_results[test.line_number],
             test
