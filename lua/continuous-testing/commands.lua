@@ -64,11 +64,11 @@ end
 -- @param pattern Execute the autocmd on save for files with this pattern
 local attach_on_save_autocmd = function(bufnr, cmd, pattern)
     state.attach(bufnr)
-    common.cleanup_previous_test_run(bufnr)
+    testing_module.initialize_state(bufnr)
 
     local handle_test = function()
         common.cleanup_previous_test_run(bufnr)
-        testing_module.initialize_state(bufnr)
+        testing_module.initialize_run(bufnr)
 
         local job_id = testing_module.test_result_handler(bufnr, cmd)
         get_state(bufnr)["job"] = job_id

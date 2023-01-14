@@ -30,7 +30,9 @@ local ts_query_tests = vim.treesitter.parse_query(
     ]]
 )
 
-M.initialize_state = function(bufnr)
+M.initialize_state = function(_) end
+
+M.initialize_run = function(bufnr)
     local root = format.get_treesitter_root(bufnr, "javascript")
 
     for id, node in ts_query_tests:iter_captures(root, bufnr, 0, -1) do

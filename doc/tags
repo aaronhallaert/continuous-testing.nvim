@@ -5,6 +5,7 @@ continuous-testing.signs	continuous-testing.txt	/*continuous-testing.signs*
 continuous-testing.structure	continuous-testing.txt	/*continuous-testing.structure*
 continuous-testing.test_frameworks	continuous-testing.txt	/*continuous-testing.test_frameworks*
 continuous-testing.test_module.command()	continuous-testing.txt	/*continuous-testing.test_module.command()*
-continuous-testing.test_module.start_signs()	continuous-testing.txt	/*continuous-testing.test_module.start_signs()*
+continuous-testing.test_module.initialize_run()	continuous-testing.txt	/*continuous-testing.test_module.initialize_run()*
+continuous-testing.test_module.initialize_state()	continuous-testing.txt	/*continuous-testing.test_module.initialize_state()*
 continuous-testing.test_module.test_result_handler()	continuous-testing.txt	/*continuous-testing.test_module.test_result_handler()*
 continuous-testing.test_module.testing_dialog_message()	continuous-testing.txt	/*continuous-testing.test_module.testing_dialog_message()*

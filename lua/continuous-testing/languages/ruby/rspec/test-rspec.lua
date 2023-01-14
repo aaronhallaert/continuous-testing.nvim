@@ -34,7 +34,7 @@ local on_exit_callback = function(bufnr, command)
         if state(bufnr).phase == "pre_test" and exit_code == 1 then
             notify({
                 "Breakpoint detected",
-                ":RunAttachedTest to run a test interactively",
+                ":CTSingleRun to run a test interactively",
             }, vim.log.levels.WARN)
 
             common.cleanup_previous_test_run(bufnr, { clear_state = false })
