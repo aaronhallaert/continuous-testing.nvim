@@ -46,7 +46,7 @@ local on_exit_callback = function(bufnr, command)
                 "See `:messages` for more info",
             }, vim.log.levels.ERROR)
 
-            common.cleanup_previous_test_run(bufnr)
+            common.cleanup_previous_test_run(bufnr, { clear_state = false })
             print(">> " .. command)
             error(tmp_output, vim.log.levels.ERROR)
             tmp_output = ""

@@ -82,7 +82,7 @@ M.attached_tests_with_lines = function()
                 k,
                 file_util.relative_path(k),
                 line,
-                instance_state.title,
+                instance_state.title or "-",
             }
 
             table.insert(files, file)
