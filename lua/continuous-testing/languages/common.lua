@@ -1,5 +1,5 @@
-local update_state = require("continuous-testing.state").update_state
 local state = require("continuous-testing.state").get_state
+local table_util = require("continuous-testing.utils.table")
 
 local M = {}
 
@@ -99,7 +99,7 @@ M.cleanup_previous_test_run = function(bufnr, opts)
     opts = opts or { clear_state = true }
 
     if state(bufnr)["job"] ~= nil then
-        vim.fn.jobstop(state(bufnr)["job"])
+        vim.fn.jobstop(state(bufnr).ct_meta.job)
     end
 
     vim.diagnostic.reset(M.ns, bufnr)
@@ -107,10 +107,11 @@ M.cleanup_previous_test_run = function(bufnr, opts)
     vim.fn.sign_unplace("continuous_tests", { buffer = bufnr })
 
     if opts.clear_state then
-        update_state(
-            bufnr,
-            { diagnostics = {}, test_results = {}, telescope_status = "" }
-        )
+        table_util.merge_table(state(bufnr), {
+            diagnostics = {},
+            test_results = {},
+            telescope_status = "",
+        })
     end
 end
 

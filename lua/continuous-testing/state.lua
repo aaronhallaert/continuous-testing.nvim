@@ -1,42 +1,50 @@
 local file_util = require("continuous-testing.utils.file")
 
--- {[bufnr] : { state }}
---   required in {state}
---      key: `tests`
---        value: table[line_number] =
---            {
---            status: "passed | failed | pending",
---            ... (whatever you want)
---            }
---      key: `diagnostics`
---        value: table =
---            { bufnr = bufnr,
---            lnum = line - 1,
---            col = 0,
---            severity = severity,
---            source = "ContinuousTesting",
---            message = message,
---            user_data = {} }
---      key: `summary_line`
---        value: string
---      key: `summary_log_level`
---        value: vim.log.levels.{}
---      key: `telescope_status`
---        value: 🚫 | ✅
---      key: `job`
---        value: jobid
+---@class TestInstanceState can be enhanced with wathever you want
+---@field status "passed" | "failed" | "pending"
+---@field title string
+
+---@class DiagnosticStructure
+---@field bufnr number
+---@field lnum number
+---@field col number
+---@field severity string vim.log.levels
+---@field source "ContinuousTesting",
+---@field message string
+---@field user_data table
+
+---@class BufferMetaState
+---@field autocmd number id of the 'OnSave' autocmd
+---@field job number id of the test run
+---@field testing_module any
+
+---@class BufferTestState
+---@field ct_meta BufferMetaState
+---@field test_results table<number, TestInstanceState> indexed by line number
+---@field diagnostics DiagnosticStructure[] @see diagnostic-structure
+---@field summary_line string
+---@field summary_log_level string vim.log.levels.{}
+---@field telescope_status "🚫"| "✅" | "🏃" | ""
+
+---@type table<number, BufferTestState>
 local global_test_state = {}
 
 local M = {}
 
+---@param bufnr number
+---@return BufferTestState
 M.get_state = function(bufnr)
     return global_test_state[bufnr]
 end
 
+---@param bufnr number
+---@param test_state BufferTestState
 M.update_state = function(bufnr, test_state)
     global_test_state[bufnr] = test_state
 end
 
+---@param bufnr number
+---@return boolean
 M.is_attached = function(bufnr)
     for k, _ in pairs(global_test_state) do
         -- buffer is in keys and value is not nil
@@ -48,18 +56,22 @@ M.is_attached = function(bufnr)
     return false
 end
 
+---@param bufnr number
 M.detach = function(bufnr)
     global_test_state[bufnr] = nil
 end
 
+---@param bufnr number
 M.attach = function(bufnr)
     global_test_state[bufnr] = {
         diagnostics = {},
         test_results = {},
         telescope_status = "",
+        ct_meta = {},
     }
 end
 
+---@return {filename: string, telescope_status: string}]
 M.attached_tests_telescope_status = function()
     local files = {}
     for k, _ in pairs(global_test_state) do
@@ -73,7 +85,7 @@ M.attached_tests_telescope_status = function()
     return files
 end
 
--- @return table [{filename, line_number, test_description}]
+---@return {bufnr: number, filename: string, line_number: number, test_description:string}[]
 M.attached_tests_with_lines = function()
     local files = {}
     for k, _ in pairs(global_test_state) do
