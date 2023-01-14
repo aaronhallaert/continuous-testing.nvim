@@ -1,29 +1,14 @@
--- [bufnr]: {
---     phase = "pre_test", "test", "parse_test", "post_test" // Determine if rubocop or test finished/failed
---     version = ...,                                        // -- source rspec
---     seed = ...,                                           // -- source rspec
---     test_results = {                                      // -- required ContinuousTesting
---         [line_number]: {
---             status = "passed", "failed", "pending",       // test result
---             description = ...,                            // -- source rspec
---             file_path = ...,                              // -- source rspec
---             line_number = ...,                            // -- source rspec
---             run_time = ...,                               // -- source rspec
---             exception = {                                 // -- source rspec
---                 class = ...,
---                 message = ...,
---                 backtrace = ...,
---             }
---         }
---     },
---     telescope_status = {},                                // -- required ContinuousTesting
---     diagnostics = {},                                     // -- required ContinuousTesting
---     summary_line = ...,                                   // -- required ContinuousTesting
---     summary_log_level = vim.log.levels.{},                // -- required ContinuousTesting
---     job = job_id                                          // -- required ContinuousTesting
--- }
---
---
+---@class RspecBufferTestState: BufferTestState
+---@field phase "pre_test" | "test" | "parse_test" | "post_test" Determine if rubocop or test finished/failed
+---@field version string source Rspec
+---@field seed number source Rspec
+
+---@class RspecTestInstanceState: TestInstanceState
+---@field description string source Rspec
+---@field file_path string source Rspec
+---@field line_number number source Rspec
+---@field run_time string source Rspec
+---@field exception {class: string, message: string, backtrace: string[]} source Rspec
 
 local format = require("continuous-testing.utils.format")
 local state = require("continuous-testing.state").get_state
@@ -32,14 +17,17 @@ local table_utils = require("continuous-testing.utils.table")
 local M = {}
 
 M.generate_tests_state = function(bufnr, json_data)
-    state(bufnr).version = json_data.version
-    state(bufnr).seed = json_data.seed
+    local buffer_test_state = state(bufnr)
+    ---@cast buffer_test_state RspecBufferTestState
+
+    buffer_test_state.version = json_data.version
+    buffer_test_state.seed = json_data.seed
 
     for _, test in pairs(json_data.examples) do
-        state(bufnr).test_results[test.line_number] = state(bufnr).test_results[test.line_number]
+        buffer_test_state.test_results[test.line_number] = state(bufnr).test_results[test.line_number]
             or {}
         table_utils.merge_table(
-            state(bufnr).test_results[test.line_number],
+            buffer_test_state.test_results[test.line_number],
             test
         )
     end
@@ -47,22 +35,29 @@ M.generate_tests_state = function(bufnr, json_data)
     local log_level
     if json_data.summary.failure_count > 0 then
         log_level = vim.log.levels.ERROR
-        state(bufnr).telescope_status = "🚫"
+        buffer_test_state.telescope_status = "🚫"
     else
         log_level = vim.log.levels.INFO
-        state(bufnr).telescope_status = "✅"
+        buffer_test_state.telescope_status = "✅"
     end
 
-    state(bufnr).summary_line = json_data.summary_line
-    state(bufnr).summary_log_level = log_level
+    buffer_test_state.summary_line = json_data.summary_line
+    buffer_test_state.summary_log_level = log_level
 end
 
+---Generate failure message based on test_state
+---@param bufnr number
+---@param test_state RspecTestInstanceState | {}
+---@return table
 M.generate_failure_message = function(bufnr, test_state)
+    local buffer_test_state = state(bufnr)
+    ---@cast buffer_test_state RspecBufferTestState
+
     local message = {
         "Test: " .. test_state.description,
         "Location: " .. test_state.file_path .. ":" .. test_state.line_number,
         "Runtime: " .. test_state.run_time,
-        "Seed: " .. state(bufnr).seed,
+        "Seed: " .. buffer_test_state.seed,
         "",
         "Exception: " .. test_state.exception.class,
         "Message:",
@@ -88,11 +83,15 @@ M.generate_failure_message = function(bufnr, test_state)
     return message
 end
 
--- Initialize state with phase `pre_test`
--- Each test state
---  status = `pending`
---  title = description
+---Initialize state with phase `pre_test`
+---Each test state
+--- status = `pending`
+--- title = description
+---@param bufnr number
 M.set_initial_state = function(bufnr)
+    local buffer_test_state = state(bufnr)
+    ---@cast buffer_test_state RspecBufferTestState
+
     local ts_query_tests = vim.treesitter.parse_query(
         "ruby",
         [[
@@ -110,9 +109,11 @@ M.set_initial_state = function(bufnr)
         if name == "title" then
             local title = vim.treesitter.query.get_node_text(node, bufnr)
             local range = { node:range() }
-            state(bufnr).test_results[range[1] + 1] =
-                { status = "pending", title = title }
-            state(bufnr).phase = "pre_test"
+            buffer_test_state.test_results[range[1] + 1] = {
+                status = "pending",
+                title = title,
+            }
+            buffer_test_state.phase = "pre_test"
         end
     end
 end

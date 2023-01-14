@@ -1,7 +1,7 @@
 local file_util = require("continuous-testing.utils.file")
 
 ---@class TestInstanceState can be enhanced with wathever you want
----@field status "passed" | "failed" | "pending"
+---@field status TestState
 ---@field title string
 
 ---@class DiagnosticStructure

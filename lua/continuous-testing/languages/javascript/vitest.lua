@@ -14,25 +14,15 @@ local OUTPUT_FILE = "/tmp/vitest_test.json"
 
 local M = {}
 
--- {
---     numTotalTests = ...,                               // -- source Vitest
---     test_results = {                                   // -- require ContinuousTesting
---         [line_number]: {
---                 status = "passed", "failed", "pending" // test result
---                 ancestorTitles = {},
---                 fullName = ...,
---                 title = ...,
---                 duration = ...,
---                 failureMessages = {},
---             },
---         },
---     },
---     telescope_status = {},                             // -- required ContinuousTesting
---     diagnostics = {},                                  // -- required ContinuousTesting
---     summary_line = ...,                                // -- required ContinuousTesting
---     summary_log_level = vim.log.levels.{},             // -- required ContinuousTesting
---     job = job_id                                       // -- required ContinuousTesting
--- }
+---@class VitestBufferTestState: BufferTestState
+---@field numTotalTests number
+
+---@class VitestTestInstanceState: TestInstanceState
+---@field status TestState
+---@field ancestorTitles string[] source Vitest
+---@field fullName string source Vitest
+---@field duration string source Vitest
+---@field failureMessages string[] source Vitest
 
 local ts_query_tests = vim.treesitter.parse_query(
     "javascript",
@@ -78,7 +68,9 @@ local generate_tests_state = function(bufnr)
         return
     end
 
+    --@type VitestBufferTestState
     local test_table = {}
+
     -- search the line number for every test_output
     for _, test in ipairs(test_output.testResults[1].assertionResults) do
         local root = format.get_treesitter_root(bufnr, "javascript")

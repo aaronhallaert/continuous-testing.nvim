@@ -1,10 +1,10 @@
 local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
+local state = require("continuous-testing.state").get_state
 local file_util = require("continuous-testing.utils.file")
 
 local M = {}
 M.open_attached_tests = function()
-    -- local previewers = require("telescope.previewers")
     local pickers = require("telescope.pickers")
     local sorters = require("telescope.sorters")
     local finders = require("telescope.finders")
@@ -41,7 +41,6 @@ M.open_attached_tests = function()
 end
 
 M.open_attached_test_instances = function()
-    -- local previewers = require("telescope.previewers")
     local pickers = require("telescope.pickers")
     local sorters = require("telescope.sorters")
     local finders = require("telescope.finders")
@@ -78,19 +77,11 @@ M.open_attached_test_instances = function()
                     actions.close(prompt_bufnr)
                     local selection = action_state.get_selected_entry()
 
-                    local filetype_extension =
-                        file_util.extension(selection.bufnr)
-
-                    local testing_module = require(
-                        "continuous-testing.languages"
-                    ).resolve_testing_module_by_file_type(
-                        filetype_extension
-                    )
-
-                    local formatted_cmd = testing_module.command(
-                        selection.bufnr,
-                        { formatting = false, lnum = selection.lnum }
-                    )
+                    local formatted_cmd =
+                        state(selection.bufnr).ct_meta.testing_module.command(
+                            selection.bufnr,
+                            { formatting = false, lnum = selection.lnum }
+                        )
                     vim.cmd(":term " .. formatted_cmd)
                 end)
                 return true
