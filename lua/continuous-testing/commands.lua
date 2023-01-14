@@ -5,11 +5,11 @@ local state = require("continuous-testing.state")
 local get_state = require("continuous-testing.state").get_state
 local common = require("continuous-testing.languages.common")
 
-local ATTACHED_TESTS = "AttachedContinuousTests"
-local RUN_ATTACHED_TESTS = "RunAttachedTest"
-local CONTINUOUS_TESTING = "ContinuousTesting"
-local CONTINUOUS_TESTING_DIALOG = "ContinuousTestingDialog"
-local STOP_CONTINUOUS_TESTING = "StopContinuousTesting"
+local ATTACHED_TESTS = "CTOverview"
+local RUN_ATTACHED_TESTS = "CTSingleRun"
+local CONTINUOUS_TESTING = "CTAttach"
+local CONTINUOUS_TESTING_DIALOG = "CTDialog"
+local STOP_CONTINUOUS_TESTING = "CTStop"
 
 local FILE_TYPE_PATTERNS = {
     rb = "*.rb",
