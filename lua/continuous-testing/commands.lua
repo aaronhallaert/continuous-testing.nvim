@@ -25,8 +25,8 @@ local M = {}
 
 local group = vim.api.nvim_create_augroup(CONTINUOUS_TESTING, { clear = true })
 
--- Stop continuous testing for the current test file
--- @param bufnr The bufnr of the test file
+---Stop continuous testing for the current test file
+---@param bufnr number
 local stop_continuous_testing_cmd = function(bufnr)
     return function()
         common.cleanup_previous_test_run(bufnr)
@@ -38,8 +38,8 @@ local stop_continuous_testing_cmd = function(bufnr)
     end
 end
 
--- Open test output dialog
--- @param bufnr The bufnr of the test file
+---Open test output dialog
+---@param bufnr number The bufnr of the test file
 local open_test_output_dialog_cmd = function(bufnr)
     local testing_module = get_state(bufnr).ct_meta.testing_module
     return function()
@@ -55,12 +55,12 @@ local open_test_output_dialog_cmd = function(bufnr)
     end
 end
 
---
--- Framework for test runners
---
--- @param bufnr Bufnr of test file
--- @param cmd Test command to execute
--- @param pattern Execute the autocmd on save for files with this pattern
+---
+---Framework for test runners
+---
+---@param bufnr number Bufnr of test file
+---@param cmd string Test command to execute
+---@param pattern string Execute the autocmd on save for files with this pattern
 local attach_on_save_autocmd = function(bufnr, cmd, pattern)
     local testing_module = get_state(bufnr).ct_meta.testing_module
     testing_module.initialize_state(bufnr)

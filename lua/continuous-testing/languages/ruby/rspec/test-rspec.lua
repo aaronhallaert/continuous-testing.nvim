@@ -11,6 +11,9 @@ local tmp_output = ""
 -- Parses stdout and scans for `{}` which includes the json test results
 local append_data = function(bufnr)
     return function(_, data)
+        local buffer_test_state = state(bufnr)
+        ---@cast buffer_test_state RspecBufferTestState
+
         if not data then
             notify({ "No data for test" }, vim.log.levels.WARN)
             return
@@ -19,9 +22,9 @@ local append_data = function(bufnr)
         for _, line in ipairs(data) do
             tmp_output = tmp_output .. "\n" .. line
             if string.find(line, "rubocop ended") == 1 then
-                state(bufnr).phase = "test"
+                buffer_test_state.phase = "test"
             elseif string.find(line, "{") == 1 then
-                state(bufnr).phase = "parse_test"
+                buffer_test_state.phase = "parse_test"
                 local json_data = vim.json.decode(line)
                 state_rspec.generate_tests_state(bufnr, json_data)
             end
@@ -31,7 +34,10 @@ end
 
 local on_exit_callback = function(bufnr, command)
     return function(_, exit_code, _)
-        if state(bufnr).phase == "pre_test" and exit_code == 1 then
+        local buffer_test_state = state(bufnr)
+        ---@cast buffer_test_state RspecBufferTestState
+
+        if buffer_test_state.phase == "pre_test" and exit_code == 1 then
             notify({
                 "Breakpoint detected",
                 ":CTSingleRun to run a test interactively",
@@ -40,7 +46,7 @@ local on_exit_callback = function(bufnr, command)
             common.cleanup_previous_test_run(bufnr, { clear_state = false })
 
             return
-        elseif state(bufnr).phase == "test" and exit_code == 1 then
+        elseif buffer_test_state.phase == "test" and exit_code == 1 then
             notify({
                 "No test results for " .. file_util.file_name(bufnr),
                 "See `:messages` for more info",
@@ -57,8 +63,7 @@ local on_exit_callback = function(bufnr, command)
             return
         end
 
-        local test_state = state(bufnr)
-        for line_number, test in pairs(test_state.test_results) do
+        for line_number, test in pairs(buffer_test_state.test_results) do
             common.place_result_sign(bufnr, line_number, test.status)
             common.add_diagnostics_to_state(
                 bufnr,
@@ -69,8 +74,8 @@ local on_exit_callback = function(bufnr, command)
         end
 
         notify(
-            test_state.summary_line,
-            test_state.summary_log_level,
+            buffer_test_state.summary_line,
+            buffer_test_state.summary_log_level,
             "RSpec " .. file_util.file_name(bufnr)
         )
 

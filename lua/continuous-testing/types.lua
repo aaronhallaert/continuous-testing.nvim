@@ -12,3 +12,6 @@
 ---@field run_tests_on_setup boolean
 ---@field framework_setup FrameworkSetup
 ---@field project_override table<string, FrameworkSetup>
+
+---@alias SupportedFrameworks "rspec" | "vitest"
+---@alias TestState "passed" | "failed" | "pending"
