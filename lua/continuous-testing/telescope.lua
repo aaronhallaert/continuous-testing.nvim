@@ -1,7 +1,6 @@
 local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
 local state = require("continuous-testing.state").get_state
-local file_util = require("continuous-testing.utils.file")
 
 local M = {}
 M.open_attached_tests = function()
