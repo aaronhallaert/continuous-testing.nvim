@@ -40,7 +40,21 @@ local ts_query_tests = vim.treesitter.parse_query(
     ]]
 )
 
-M.initialize_state = function(_) end
+M.initialize_state = function(bufnr)
+    local root = format.get_treesitter_root(bufnr, "javascript")
+
+    for id, node in ts_query_tests:iter_captures(root, bufnr, 0, -1) do
+        local name = ts_query_tests.captures[id]
+        if name == "str" then
+            local title = vim.treesitter.query.get_node_text(node, bufnr)
+            -- {start row, start col, end row, end col}
+            local range = { node:range() }
+            state(bufnr).test_results[range[1] + 1] = {
+                title = title,
+            }
+        end
+    end
+end
 
 M.initialize_run = function(bufnr)
     local root = format.get_treesitter_root(bufnr, "javascript")
@@ -180,7 +194,10 @@ M.test_result_handler = function(bufnr, cmd)
     return job_id
 end
 
-M.command = function(bufnr)
+---@param bufnr number
+---@param opts {formatting: boolean, lnum: number}
+M.command = function(bufnr, opts)
+    opts = opts or { formatting = true, lnum = nil }
     local path = file_util.relative_path(bufnr)
     local js_config = config.get_config().javascript
 
@@ -189,14 +206,23 @@ M.command = function(bufnr)
         file_util.find_first_ancestor(path, js_config.root_pattern)
 
     local c = format.inject_file_to_test_command(js_config.test_cmd, path)
-        .. " --outputFile="
-        .. OUTPUT_FILE
+
+    if opts.formatting then
+        c = c .. " --outputFile=" .. OUTPUT_FILE
+        c = c .. " --reporter=verbose  --reporter=json"
+    else
+        local cwd =
+            file_util.find_package_json_ancestor(file_util.absolute_path(bufnr))
+        c = "cd " .. cwd .. " && " .. c
+    end
 
     if root_folder ~= nil then
         c = c .. " --root=" .. root_folder
     end
 
-    c = c .. " --reporter=verbose  --reporter=json"
+    if opts.lnum ~= nil then
+        c = c .. " -t '" .. state(bufnr).test_results[opts.lnum].title .. "'"
+    end
 
     return c
 end
