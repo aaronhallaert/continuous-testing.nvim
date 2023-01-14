@@ -9,7 +9,7 @@ local ATTACHED_TESTS = "CTOverview"
 local RUN_ATTACHED_TESTS = "CTSingleRun"
 local CONTINUOUS_TESTING = "CTAttach"
 local CONTINUOUS_TESTING_DIALOG = "CTDialog"
-local STOP_CONTINUOUS_TESTING = "CTStop"
+local STOP_CONTINUOUS_TESTING = "CTDetach"
 
 local FILE_TYPE_PATTERNS = {
     rb = "*.rb",

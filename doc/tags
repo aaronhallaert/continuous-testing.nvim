@@ -1,4 +1,9 @@
 continuous-testing	continuous-testing.txt	/*continuous-testing*
+continuous-testing.CTAttach	continuous-testing.txt	/*continuous-testing.CTAttach*
+continuous-testing.CTDetach	continuous-testing.txt	/*continuous-testing.CTDetach*
+continuous-testing.CTDialog	continuous-testing.txt	/*continuous-testing.CTDialog*
+continuous-testing.CTOverview	continuous-testing.txt	/*continuous-testing.CTOverview*
+continuous-testing.CTSingleRun	continuous-testing.txt	/*continuous-testing.CTSingleRun*
 continuous-testing.javascript.vitest	continuous-testing.txt	/*continuous-testing.javascript.vitest*
 continuous-testing.ruby.rspec	continuous-testing.txt	/*continuous-testing.ruby.rspec*
 continuous-testing.signs	continuous-testing.txt	/*continuous-testing.signs*
@@ -9,3 +14,4 @@ continuous-testing.test_module.initialize_run()	continuous-testing.txt	/*continu
 continuous-testing.test_module.initialize_state()	continuous-testing.txt	/*continuous-testing.test_module.initialize_state()*
 continuous-testing.test_module.test_result_handler()	continuous-testing.txt	/*continuous-testing.test_module.test_result_handler()*
 continuous-testing.test_module.testing_dialog_message()	continuous-testing.txt	/*continuous-testing.test_module.testing_dialog_message()*
+continuous-testing.user_commands	continuous-testing.txt	/*continuous-testing.user_commands*
