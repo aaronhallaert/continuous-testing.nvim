@@ -58,7 +58,7 @@ local on_exit_callback = function(bufnr, command)
         end
 
         local test_state = state(bufnr)
-        for line_number, test in pairs(test_state.tests) do
+        for line_number, test in pairs(test_state.test_results) do
             common.place_result_sign(bufnr, line_number, test.status)
             common.add_diagnostics_to_state(
                 bufnr,

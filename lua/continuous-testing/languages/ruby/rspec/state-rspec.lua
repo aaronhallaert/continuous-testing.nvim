@@ -8,7 +8,7 @@ M.generate_tests_state = function(bufnr, json_data)
     state(bufnr).seed = json_data.seed
 
     for _, test in pairs(json_data.examples) do
-        state(bufnr).tests[test.line_number] = test
+        state(bufnr).test_results[test.line_number] = test
     end
 
     local log_level
@@ -77,7 +77,7 @@ M.set_initial_state = function(bufnr)
         if name == "title" then
             local title = vim.treesitter.query.get_node_text(node, bufnr)
             local range = { node:range() }
-            state(bufnr).tests[range[1] + 1] =
+            state(bufnr).test_results[range[1] + 1] =
                 { status = "pending", title = title }
             state(bufnr).phase = "pre_test"
         end

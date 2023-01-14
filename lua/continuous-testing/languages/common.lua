@@ -109,7 +109,7 @@ M.cleanup_previous_test_run = function(bufnr, opts)
     if opts.clear_state then
         update_state(
             bufnr,
-            { diagnostics = {}, tests = {}, telescope_status = "" }
+            { diagnostics = {}, test_results = {}, telescope_status = "" }
         )
     end
 end

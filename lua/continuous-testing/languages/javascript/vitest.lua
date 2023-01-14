@@ -80,7 +80,7 @@ local generate_tests_state = function(bufnr)
         test_table[line] = test
     end
 
-    table_util.merge_table(state(bufnr), { tests = test_table })
+    table_util.merge_table(state(bufnr), { test_results = test_table })
     test_output.testResults = nil
     table_util.merge_table(state(bufnr), test_output)
 
@@ -101,7 +101,7 @@ local generate_tests_state = function(bufnr)
 end
 
 M.testing_dialog_message = function(bufnr, line_position)
-    local message = state(bufnr).tests[line_position].failureMessages
+    local message = state(bufnr).test_results[line_position].failureMessages
 
     if message == nil then
         message = { "No failure found" }
@@ -118,14 +118,14 @@ M.test_result_handler = function(bufnr, cmd)
             local test_state = state(bufnr)
 
             -- exit_code 143 means SIGTERM
-            if next(test_state.tests) == nil and exit_code ~= 143 then
+            if next(test_state.test_results) == nil and exit_code ~= 143 then
                 common.cleanup_previous_test_run(bufnr)
                 notify({
                     "No test results for " .. file_util.file_name(bufnr),
                 }, vim.log.levels.ERROR)
             end
 
-            for line_number, test in pairs(test_state.tests) do
+            for line_number, test in pairs(test_state.test_results) do
                 common.place_result_sign(bufnr, line_number, test.status)
                 common.add_diagnostics_to_state(
                     bufnr,
