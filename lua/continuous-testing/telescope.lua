@@ -32,8 +32,7 @@ M.open_attached_tests = function()
                 map("i", "<CR>", function(prompt_bufnr)
                     actions.close(prompt_bufnr)
                     local selection = action_state.get_selected_entry()
-                    local file = selection[1]
-                    vim.cmd(":edit " .. file)
+                    vim.cmd(":edit " .. selection.filename)
                 end)
                 return true
             end,

@@ -77,7 +77,7 @@ test_module.testing_dialog_message( {bufnr}, {line_position} )    *continuous-te
 test_module.initialize_state( {bufnr} )                          *continuous-testing.test_module.start_signs()*
     - Places start signs (by making use of `common.place_start_sign`) in the
     test buffer. 
-    - Set some state values for each test line (in `state(bufnr).tests[line]`)
+    - Set some state values for each test line (in `state(bufnr).test_results[line]`)
 
     For example, determine lines of tests with treesitter.
 
@@ -92,7 +92,7 @@ State table specifications:
 { 
     version = ...,
     seed = ...,
-    tests = {
+    test_results = {
         [line_number]: {
             status = ..., // "passed", "failed", "pending"
             description = ...,
@@ -118,7 +118,7 @@ State table specifications:
 State table specifications:
 {
     numTotalTests = ...,
-    tests = {
+    test_results = {
         [line_number]: {
                 status = ..., // "passed", "failed", "pending"
                 ancestorTitles = {},

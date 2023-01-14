@@ -48,7 +48,7 @@ M.test_result_handler = function(bufnr, cmd)
 end
 
 M.testing_dialog_message = function(bufnr, line_position)
-    local test_state = state(bufnr).tests[line_position]
+    local test_state = state(bufnr).test_results[line_position]
     if not test_state or test_state.status ~= common.TEST_RESULTS.FAILED then
         return
     end
