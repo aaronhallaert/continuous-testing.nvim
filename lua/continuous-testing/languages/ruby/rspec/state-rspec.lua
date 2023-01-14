@@ -27,6 +27,7 @@
 
 local format = require("continuous-testing.utils.format")
 local state = require("continuous-testing.state").get_state
+local table_utils = require("continuous-testing.utils.table")
 
 local M = {}
 
@@ -35,7 +36,10 @@ M.generate_tests_state = function(bufnr, json_data)
     state(bufnr).seed = json_data.seed
 
     for _, test in pairs(json_data.examples) do
-        state(bufnr).test_results[test.line_number] = test
+        table_utils.merge_table(
+            state(bufnr).test_results[test.line_number],
+            test
+        )
     end
 
     local log_level
