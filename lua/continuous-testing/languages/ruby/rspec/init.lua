@@ -40,6 +40,10 @@ end
 
 M.initialize_state = function(bufnr)
     state_rspec.set_initial_state(bufnr)
+end
+
+M.initialize_run = function(bufnr)
+    state_rspec.set_initial_state(bufnr)
     buffer_rspec.set_start_signs(bufnr)
 end
 

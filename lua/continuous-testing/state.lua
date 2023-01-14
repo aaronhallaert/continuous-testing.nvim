@@ -53,7 +53,11 @@ M.detach = function(bufnr)
 end
 
 M.attach = function(bufnr)
-    global_test_state[bufnr] = {}
+    global_test_state[bufnr] = {
+        diagnostics = {},
+        test_results = {},
+        telescope_status = "",
+    }
 end
 
 M.attached_tests_telescope_status = function()

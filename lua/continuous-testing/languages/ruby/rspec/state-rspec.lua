@@ -1,3 +1,30 @@
+-- [bufnr]: {
+--     phase = "pre_test", "test", "parse_test", "post_test" // Determine if rubocop or test finished/failed
+--     version = ...,                                        // -- source rspec
+--     seed = ...,                                           // -- source rspec
+--     test_results = {                                      // -- required ContinuousTesting
+--         [line_number]: {
+--             status = "passed", "failed", "pending",       // test result
+--             description = ...,                            // -- source rspec
+--             file_path = ...,                              // -- source rspec
+--             line_number = ...,                            // -- source rspec
+--             run_time = ...,                               // -- source rspec
+--             exception = {                                 // -- source rspec
+--                 class = ...,
+--                 message = ...,
+--                 backtrace = ...,
+--             }
+--         }
+--     },
+--     telescope_status = {},                                // -- required ContinuousTesting
+--     diagnostics = {},                                     // -- required ContinuousTesting
+--     summary_line = ...,                                   // -- required ContinuousTesting
+--     summary_log_level = vim.log.levels.{},                // -- required ContinuousTesting
+--     job = job_id                                          // -- required ContinuousTesting
+-- }
+--
+--
+
 local format = require("continuous-testing.utils.format")
 local state = require("continuous-testing.state").get_state
 
