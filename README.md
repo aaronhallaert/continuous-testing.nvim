@@ -69,7 +69,7 @@ require("continuous-testing").setup {
         ruby = {
             test_tool = "rspec",
             test_cmd = "bundle exec rspec %file",
-        }
+        },
         javascript = {
             test_tool = "vitest", -- cwd of the executing test will be at package.json
             test_cmd = "yarn vitest run %file",
