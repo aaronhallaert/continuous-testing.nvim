@@ -24,10 +24,10 @@ end
 ---Add result sign for a test in a file
 ---
 ---@param bufnr number Buffer number
----@param line number Line number of the test
+---@param line number Line number of the test (starts at 1)
 ---@param status TestState
 M.place_result_sign = function(bufnr, line, status)
-    vim.fn.sign_unplace("", { buffer = bufnr, id = line })
+    vim.fn.sign_unplace("*", { buffer = bufnr, id = line })
 
     vim.fn.sign_place(
         line,
@@ -41,14 +41,14 @@ end
 ---Add start sign to a test
 --
 ---@param bufnr number Buffer number
----@param line number Line number of test
+---@param line number Line number of test (starts at 1)
 M.place_start_sign = function(bufnr, line)
     vim.fn.sign_place(
         line,
         "continuous_tests", -- use default sign group so we can share animation instances.
         "test_running",
         bufnr,
-        { lnum = line + 1, priority = 100 }
+        { lnum = line, priority = 100 }
     )
 
     state(bufnr).telescope_status = "🏃"
