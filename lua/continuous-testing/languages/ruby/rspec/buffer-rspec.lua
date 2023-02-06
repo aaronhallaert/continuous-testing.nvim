@@ -20,7 +20,7 @@ M.set_start_signs = function(bufnr)
         if name == "id" then
             -- {start row, start col, end row, end col}
             local range = { node:range() }
-            common.place_start_sign(bufnr, range[1])
+            common.place_start_sign(bufnr, range[1] + 1)
         end
     end
 end

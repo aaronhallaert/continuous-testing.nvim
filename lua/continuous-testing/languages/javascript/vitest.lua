@@ -64,7 +64,7 @@ M.initialize_run = function(bufnr)
         if name == "str" then
             -- {start row, start col, end row, end col}
             local range = { node:range() }
-            common.place_start_sign(bufnr, range[1])
+            common.place_start_sign(bufnr, range[1] + 1)
         end
     end
 end
