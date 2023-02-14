@@ -30,23 +30,31 @@ This plugin defines following signs to set in the
 ======================================================================================
 2. Supported test frameworks                              *continuous-testing.test_frameworks*
 
-When adding support for a test framework, place the implemented framework under `languages/$FILETYPE/$FRAMEWORK.lua`.
+First, add an entry to the `FILE_TYPES` object in `languages/init.lua`, which
+maps a file extension to the required filetype.
+
+When adding support for a test framework, place the implementation of the framework 
+in `languages/$FILETYPE/$FRAMEWORK.lua` or `languages/$FILETYPE/$FRAMEWORK/init.lua`.
 
 This file should contain the following functions:
 
-test_module.command( {bufnr} )                                    *continuous-testing.test_module.command()*
+test_module.command( {bufnr}, {opts} )                                    *continuous-testing.test_module.command()*
     Returns the test command (string) which is executed on save.
 
     Parameters: 
       {bufnr}  (number) The bufnr of the test file.
+      {opts}   (object) Extra options.
+        {formatting} (boolean = true) Adds additional formatting to the test 
+                                      command in order to parse the results.
+        {lnum}       (number) Optional: specifies the line number of the test
+                              to run. Used in `telescope.open_attached_test_instances`.
 
     Return:
       Test command as string
 
 test_module.test_result_handler( {bufnr}, {cmd} )                *continuous-testing.test_module.test_result_handler()*
-    Returns a function which runs (a test job) every time files are changed.
-    The returned function should return the job_id on its turn.
-    This is the main autocommand callback.
+    Function which will execute (a test job) every time files are changed.
+    This function returns a `job_id` (from `vim.fn.jobstart`) that can be used to cancel the test run. 
     In general, it should handle the following things:
       - Run the test of the bufnr.
       - Parse the output and set the state for the test (`state(bufnr)`)
@@ -63,7 +71,7 @@ test_module.test_result_handler( {bufnr}, {cmd} )                *continuous-tes
       {cmd}    (string) A command to execute the test with a placeholder `%file`.
 
     Return:
-      Callback function with a return type of number representing a job_id, which runs on every autocmd
+     job_id from `vim.fn.jobstart`
 
 
 test_module.testing_dialog_message( {bufnr}, {line_position} )    *continuous-testing.test_module.testing_dialog_message()*
@@ -75,7 +83,7 @@ test_module.testing_dialog_message( {bufnr}, {line_position} )    *continuous-te
       {line_position}  (number) The line number of the failing test.
 
 test_module.initialize_state( {bufnr} )                          *continuous-testing.test_module.initialize_state()*
-    - Set some state values for each test line (in `state(bufnr).test_results[line]`)
+    Set some state values for each test line (in `state(bufnr).test_results[line]`)
 
     For example, determine lines of tests with treesitter.
 
