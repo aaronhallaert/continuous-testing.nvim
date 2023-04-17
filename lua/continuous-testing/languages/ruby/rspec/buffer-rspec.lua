@@ -1,10 +1,11 @@
 local common = require("continuous-testing.languages.common")
 local format = require("continuous-testing.utils.format")
+local treesitter_utils = require("continuous-testing.utils.treesitter")
 
 local M = {}
 
 M.set_start_signs = function(bufnr)
-    local ts_query_tests = vim.treesitter.parse_query(
+    local ts_query_tests = treesitter_utils.parse_query(
         "ruby",
         [[
         (call

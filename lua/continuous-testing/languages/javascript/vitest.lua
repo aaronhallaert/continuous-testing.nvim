@@ -6,6 +6,7 @@ local table_util = require("continuous-testing.utils.table")
 local file_util = require("continuous-testing.utils.file")
 local format = require("continuous-testing.utils.format")
 local notify = require("continuous-testing.utils.notify")
+local treesitter_utils = require("continuous-testing.utils.treesitter")
 
 -- implementation helpers
 local common = require("continuous-testing.languages.common")
@@ -24,7 +25,7 @@ local M = {}
 ---@field duration string source Vitest
 ---@field failureMessages string[] source Vitest
 
-local ts_query_tests = vim.treesitter.parse_query(
+local ts_query_tests = treesitter_utils.parse_query(
     "javascript",
     [[
     (expression_statement
@@ -46,7 +47,7 @@ M.initialize_state = function(bufnr)
     for id, node in ts_query_tests:iter_captures(root, bufnr, 0, -1) do
         local name = ts_query_tests.captures[id]
         if name == "str" then
-            local title = vim.treesitter.query.get_node_text(node, bufnr)
+            local title = treesitter_utils.get_node_text(node, bufnr)
             -- {start row, start col, end row, end col}
             local range = { node:range() }
             state(bufnr).test_results[range[1] + 1] = {
@@ -96,7 +97,7 @@ local generate_tests_state = function(bufnr)
                 if name == "str" then
                     -- {start row, start col, end row, end col}
                     local range = { node:range() }
-                    local match = vim.treesitter.get_node_text(node, bufnr)
+                    local match = treesitter_utils.get_node_text(node, bufnr)
                     if string.find(test.fullName, match) then
                         return range[1]
                     end
