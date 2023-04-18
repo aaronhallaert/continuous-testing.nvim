@@ -1,8 +1,7 @@
 local scan = require("plenary.scandir")
 local Path = require("plenary.path")
-local eq = assert.are.same
 
-function split(inputstr, sep)
+local function split(inputstr, sep)
     if sep == nil then
         sep = "%s"
     end
@@ -11,15 +10,6 @@ function split(inputstr, sep)
         table.insert(t, str)
     end
     return t
-end
-
-local contains = function(tbl, str)
-    for _, v in ipairs(tbl) do
-        if v == str then
-            return true
-        end
-    end
-    return false
 end
 
 local supported_modules = function()
