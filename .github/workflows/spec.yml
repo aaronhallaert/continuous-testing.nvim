@@ -11,11 +11,15 @@ jobs:
       matrix:
         include:
           - os: ubuntu-20.04
-            url: https://github.com/neovim/neovim/releases/download/nightly/nvim-linux64.tar.gz
+            url: https://github.com/neovim/neovim/releases/download/v0.7.0/nvim-linux64.tar.gz
             manager: sudo apt-get
             packages: -y ripgrep
           - os: ubuntu-20.04
-            url: https://github.com/neovim/neovim/releases/download/v0.7.0/nvim-linux64.tar.gz
+            url: https://github.com/neovim/neovim/releases/download/v0.8.0/nvim-linux64.tar.gz
+            manager: sudo apt-get
+            packages: -y ripgrep
+          - os: ubuntu-20.04
+            url: https://github.com/neovim/neovim/releases/download/v0.9.0/nvim-linux64.tar.gz
             manager: sudo apt-get
             packages: -y ripgrep
     steps:
@@ -29,16 +33,13 @@ jobs:
 
       - name: Prepare
         run: |
+          sudo update-ca-certificates
           ${{ matrix.manager }} update
           ${{ matrix.manager }} install ${{ matrix.packages }}
           test -d _neovim || {
             mkdir -p _neovim
             curl -sL ${{ matrix.url }} | tar xzf - --strip-components=1 -C "${PWD}/_neovim"
           }
-          mkdir -p ~/.local/share/nvim/site/pack/vendor/start
-          git clone --depth 1 https://github.com/nvim-lua/plenary.nvim ~/.local/share/nvim/site/pack/vendor/start/plenary.nvim
-          git clone --depth 1 https://github.com/nvim-treesitter/nvim-treesitter ~/.local/share/nvim/site/pack/vendor/start/nvim-treesitter
-          ln -s $(pwd) ~/.local/share/nvim/site/pack/vendor/start
       - name: Run tests
         run: |
           export PATH="${PWD}/_neovim/bin:${PATH}"
