@@ -83,7 +83,7 @@ local attach_on_save_autocmd = function(bufnr, cmd, pattern)
 
     notify({ "Added " .. file_util.file_name(bufnr) }, vim.log.levels.INFO)
 
-    vim.api.nvim_create_autocmd("BufDelete", {
+    vim.api.nvim_create_autocmd("BufUnload", {
         group = group,
         buffer = bufnr,
         callback = stop_continuous_testing_cmd(bufnr),
