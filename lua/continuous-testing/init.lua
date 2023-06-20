@@ -14,22 +14,22 @@ M.setup = function(config)
 
     vim.fn.sign_define(
         "test_success",
-        { text = "", texthl = "ContinuousTestingPassed" }
+        { text = "󰄬", texthl = "ContinuousTestingPassed" }
     )
 
     vim.fn.sign_define(
         "test_failure",
-        { text = "", texthl = "ContinuousTestingFailed" }
+        { text = "󰅖", texthl = "ContinuousTestingFailed" }
     )
 
     vim.fn.sign_define(
         "test_skipped",
-        { text = "嶺", texthl = "ContinuousTestingSkipped" }
+        { text = "󰒬", texthl = "ContinuousTestingSkipped" }
     )
 
     vim.fn.sign_define(
         "test_running",
-        { text = "累", texthl = "ContinuousTestingRunning" }
+        { text = "󰑐", texthl = "ContinuousTestingRunning" }
     )
 
     vim.fn.sign_define("test_other", { text = "" })
