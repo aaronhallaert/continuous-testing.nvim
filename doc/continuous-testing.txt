@@ -21,11 +21,11 @@ Run tests async on save, add to diagnostics, get notified on failures.
 This plugin defines following signs to set in the
 |continuous-testing.test_module.test_result_handler()|
 
-- test_success = 
-- test_failure = 
-- test_skipped = 嶺
+- test_success = 󰄬
+- test_failure = 󰅖
+- test_skipped = 󰒬
 - test_other = 
-- test_running = 累
+- test_running = 󰑐
 
 ======================================================================================
 2. Supported test frameworks                              *continuous-testing.test_frameworks*
